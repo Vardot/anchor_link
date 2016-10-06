@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @file
- * Definition of \Drupal\anchor_link\Plugin\CKEditorPlugin\FakeObjects.
- */
 namespace Drupal\anchor_link\Plugin\CKEditorPlugin;
 
 use Drupal\Core\Plugin\PluginBase;

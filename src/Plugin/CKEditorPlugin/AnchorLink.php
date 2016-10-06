@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @file
- * Definition of \Drupal\anchor_link\Plugin\CKEditorPlugin\AnchorLink.
- */
 namespace Drupal\anchor_link\Plugin\CKEditorPlugin;
 
 use Drupal\editor\Entity\Editor;
