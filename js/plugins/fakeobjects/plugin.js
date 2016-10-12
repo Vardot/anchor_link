@@ -3,7 +3,7 @@
  * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
-(function ($, Drupal, drupalSettings, CKEDITOR) {
+( function() {
 	var cssStyle = CKEDITOR.htmlParser.cssStyle,
 		cssLength = CKEDITOR.tools.cssLength;
 
@@ -180,4 +180,4 @@
 		return element;
 	};
 
-})(jQuery, Drupal, drupalSettings, CKEDITOR);
+} )();
