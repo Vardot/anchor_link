@@ -19,8 +19,8 @@ CKEDITOR.plugins.setLang( 'link', 'eo', {
 	anchorName: 'Per Ankronomo',
 	charset: 'Signaro de la Ligita Rimedo',
 	cssClasses: 'Klasoj de Stilfolioj',
-	download: 'Altrudi Elŝuton',
-	displayText: 'Vidigi Tekston',
+	download: 'Force Download', // MISSING
+	displayText: 'Display Text', // MISSING
 	emailAddress: 'Retpoŝto',
 	emailBody: 'Mesaĝa korpo',
 	emailSubject: 'Mesaĝa Temo',

@@ -92,11 +92,9 @@
 			CKEDITOR.dialog.add( 'anchor', this.path + 'dialogs/anchor.js' );
 
 			editor.on( 'doubleclick', function( evt ) {
-				// If the link has descendants and the last part of it is also a part of a word partially
-				// unlinked, clicked element may be a descendant of the link, not the link itself. (#11956)
-				var element = CKEDITOR.plugins.link.getSelectedLink( editor ) || evt.data.element.getAscendant( 'a', 1 );
+				var element = CKEDITOR.plugins.link.getSelectedLink( editor ) || evt.data.element;
 
-				if ( element && !element.isReadOnly() ) {
+				if ( !element.isReadOnly() ) {
 					if ( element.is( 'a' ) ) {
 						evt.data.dialog = ( element.getAttribute( 'name' ) && ( !element.getAttribute( 'href' ) || !element.getChildCount() ) ) ? 'anchor' : 'link';
 
@@ -313,38 +311,20 @@
 		 *
 		 * @since 3.2.1
 		 * @param {CKEDITOR.editor} editor
-		 * @param {Boolean} [returnMultiple=false] Indicates whether the function should return only the first selected link or all of them.
-		 * @returns {CKEDITOR.dom.element/CKEDITOR.dom.element[]/null} A single link element or an array of link
-		 * elements relevant to the current selection.
 		 */
-		getSelectedLink: function( editor, returnMultiple ) {
-			var selection = editor.getSelection(),
-				selectedElement = selection.getSelectedElement(),
-				ranges = selection.getRanges(),
-				links = [],
-				link,
-				range,
-				i;
-
-			if ( !returnMultiple && selectedElement && selectedElement.is( 'a' ) ) {
+		getSelectedLink: function( editor ) {
+			var selection = editor.getSelection();
+			var selectedElement = selection.getSelectedElement();
+			if ( selectedElement && selectedElement.is( 'a' ) )
 				return selectedElement;
+
+			var range = selection.getRanges()[ 0 ];
+
+			if ( range ) {
+				range.shrink( CKEDITOR.SHRINK_TEXT );
+				return editor.elementPath( range.getCommonAncestor() ).contains( 'a', 1 );
 			}
-
-			for ( i = 0; i < ranges.length; i++ ) {
-				range = selection.getRanges()[ i ];
-
-				// Skip bogus to cover cases of multiple selection inside tables (#tp2245).
-				range.shrink( CKEDITOR.SHRINK_TEXT, false, { skipBogus: true } );
-				link = editor.elementPath( range.getCommonAncestor() ).contains( 'a', 1 );
-
-				if ( link && returnMultiple ) {
-					links.push( link );
-				} else if ( link ) {
-					return link;
-				}
-			}
-
-			return returnMultiple ? links : null;
+			return null;
 		},
 
 		/**
@@ -746,23 +726,18 @@
 		 */
 		showDisplayTextForElement: function( element, editor ) {
 			var undesiredElements = {
-					img: 1,
-					table: 1,
-					tbody: 1,
-					thead: 1,
-					tfoot: 1,
-					input: 1,
-					select: 1,
-					textarea: 1
-				},
-				selection = editor.getSelection();
+				img: 1,
+				table: 1,
+				tbody: 1,
+				thead: 1,
+				tfoot: 1,
+				input: 1,
+				select: 1,
+				textarea: 1
+			};
 
 			// Widget duck typing, we don't want to show display text for widgets.
 			if ( editor.widgets && editor.widgets.focused ) {
-				return false;
-			}
-
-			if ( selection && selection.getRanges().length > 1 ) {
 				return false;
 			}
 
@@ -775,29 +750,8 @@
 	CKEDITOR.unlinkCommand = function() {};
 	CKEDITOR.unlinkCommand.prototype = {
 		exec: function( editor ) {
-			// IE/Edge removes link from selection while executing "unlink" command when cursor
-			// is right before/after link's text. Therefore whole link must be selected and the
-			// position of cursor must be restored to its initial state after unlinking. (#13062)
-			if ( CKEDITOR.env.ie ) {
-				var range = editor.getSelection().getRanges()[ 0 ],
-					link = ( range.getPreviousEditableNode() && range.getPreviousEditableNode().getAscendant( 'a', true ) ) ||
-							( range.getNextEditableNode() && range.getNextEditableNode().getAscendant( 'a', true ) ),
-					bookmark;
-
-				if ( range.collapsed && link ) {
-					bookmark = range.createBookmark();
-					range.selectNodeContents( link );
-					range.select();
-				}
-			}
-
 			var style = new CKEDITOR.style( { element: 'a', type: CKEDITOR.STYLE_INLINE, alwaysRemoveElement: 1 } );
 			editor.removeStyle( style );
-
-			if ( bookmark ) {
-				range.moveToBookmark( bookmark );
-				range.select();
-			}
 		},
 
 		refresh: function( editor, path ) {
@@ -814,8 +768,7 @@
 
 		contextSensitive: 1,
 		startDisabled: 1,
-		requiredContent: 'a[href]',
-		editorFocus: 1
+		requiredContent: 'a[href]'
 	};
 
 	CKEDITOR.removeAnchorCommand = function() {};

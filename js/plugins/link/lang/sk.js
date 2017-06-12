@@ -19,8 +19,8 @@ CKEDITOR.plugins.setLang( 'link', 'sk', {
 	anchorName: 'Podľa mena kotvy',
 	charset: 'Priradená znaková sada',
 	cssClasses: 'Triedy štýlu',
-	download: 'Vynútené sťahovanie.',
-	displayText: 'Zobraziť text',
+	download: 'Force Download', // MISSING
+	displayText: 'Display Text', // MISSING
 	emailAddress: 'E-Mailová adresa',
 	emailBody: 'Telo správy',
 	emailSubject: 'Predmet správy',
