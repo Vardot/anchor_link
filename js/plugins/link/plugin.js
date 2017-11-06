@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
@@ -91,31 +91,6 @@
 			CKEDITOR.dialog.add( 'link', this.path + 'dialogs/link.js' );
 			CKEDITOR.dialog.add( 'anchor', this.path + 'dialogs/anchor.js' );
 
-			editor.on( 'doubleclick', function( evt ) {
-				// If the link has descendants and the last part of it is also a part of a word partially
-				// unlinked, clicked element may be a descendant of the link, not the link itself (http://dev.ckeditor.com/ticket/11956).
-				// The evt.data.element.getAscendant( 'img', 1 ) condition allows opening anchor dialog if the anchor is empty (#501).
-				var element = evt.data.element.getAscendant( { a: 1, img: 1 }, true );
-
-				if ( element && !element.isReadOnly() ) {
-					if ( element.is( 'a' ) ) {
-						evt.data.dialog = ( element.getAttribute( 'name' ) && ( !element.getAttribute( 'href' ) || !element.getChildCount() ) ) ? 'anchor' : 'link';
-
-						// Pass the link to be selected along with event data.
-						evt.data.link = element;
-					} else if ( CKEDITOR.plugins.link.tryRestoreFakeAnchor( editor, element ) ) {
-						evt.data.dialog = 'anchor';
-					}
-				}
-			}, null, null, 0 );
-
-			// If event was cancelled, link passed in event data will not be selected.
-			editor.on( 'doubleclick', function( evt ) {
-				// Make sure both links and anchors are selected (http://dev.ckeditor.com/ticket/11822).
-				if ( evt.data.dialog in { link: 1, anchor: 1 } && evt.data.link )
-					editor.getSelection().selectElement( evt.data.link );
-			}, null, null, 20 );
-
 			// If the "menu" plugin is loaded, register the menu items.
 			if ( editor.addMenuItems ) {
 				editor.addMenuItems( {
@@ -133,19 +108,6 @@
 						order: 5
 					},
 
-					link: {
-						label: editor.lang.link.menu,
-						command: 'link',
-						group: 'link',
-						order: 1
-					},
-
-					unlink: {
-						label: editor.lang.link.unlink,
-						command: 'unlink',
-						group: 'link',
-						order: 5
-					}
 				} );
 			}
 
@@ -161,9 +123,6 @@
 						return null;
 
 					var menu = {};
-
-					if ( anchor.getAttribute( 'href' ) && anchor.getChildCount() )
-						menu = { link: CKEDITOR.TRISTATE_OFF, unlink: CKEDITOR.TRISTATE_OFF };
 
 					if ( anchor && anchor.hasAttribute( 'name' ) )
 						menu.anchor = menu.removeAnchor = CKEDITOR.TRISTATE_OFF;
