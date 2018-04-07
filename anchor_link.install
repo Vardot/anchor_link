@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the anchor_link module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function anchor_link_requirements($phase) {
+
+  $requirements = [];
+
+  $path = DRUPAL_ROOT . '/libraries/ckeditor/plugins/link/plugin.js';
+  if (\Drupal::moduleHandler()->moduleExists('libraries')) {
+    $path = libraries_get_path('ckeditor_anchor_link') . '/plugin.js';
+  }
+
+  // Is the library found in the root libraries path.
+  $library_found = file_exists($path);
+
+  // If library is not found, then look in the current profile libraries path.
+  if (!$library_found) {
+    $profile_path = drupal_get_path('profile', drupal_get_profile());
+    $profile_path .= '/libraries/ckeditor/plugins/link/plugin.js';
+    // Is the library found in the current profile libraries path.
+    $library_found = file_exists($profile_path);
+  }
+
+  if (!$library_found) {
+    $requirements['link_library'] = array(
+      'title' => t('CKEditor Anchor Link library missing'),
+      'description' => t('Anchor link module requires the CKEditor Link library.
+        Download it (http://ckeditor.com/addon/link) and place it in the
+        libraries folder (/libraries/ckeditor/plugins)'),
+      'severity' => REQUIREMENT_ERROR,
+    );
+  }
+
+  return $requirements;
+}

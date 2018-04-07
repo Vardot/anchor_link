@@ -39,10 +39,11 @@ function anchor_link_theme() {
 }
 
 /**
- * Implements hook_page_attachments().
+ * Implements hook_library_info_alter().
  */
-function anchor_link_page_attachments(array &$attachments) {
-  if (!(\Drupal::currentUser()->isAnonymous())) {
-    $attachments['#attached']['library'][] = 'anchor_link/drupal.anchor_link';
+function anchor_link_library_info_alter(&$libraries, $extension) {
+  // Add support for "Libraries API" module, if exists.
+  if ($extension == 'ckeditor_anchor_link' && \Drupal::moduleHandler()->moduleExists('libraries')) {
+    $libraries['ckeditor_anchor_link']['js'] = ['/' . libraries_get_path('ckeditor_anchor_link') . '/plugin.js' => []];
   }
 }

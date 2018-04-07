@@ -20,9 +20,15 @@ class AnchorLink extends CKEditorPluginBase {
   * Implements \Drupal\ckeditor\Plugin\CKEditorPluginInterface::getFile().
   */
   function getFile() {
-    return drupal_get_path('module', 'anchor_link') . '/js/plugins/link/plugin.js';
+    $path = 'libraries/ckeditor/plugins/link';
+    // Support for "Libaraies API" module.
+    if (\Drupal::moduleHandler()->moduleExists('libraries')) {
+      $path = libraries_get_path('ckeditor_anchor_link');
+    }
+
+    return $path . '/plugin.js';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -31,14 +37,15 @@ class AnchorLink extends CKEditorPluginBase {
       'fakeobjects',
     ];
   }
+
   /**
    * {@inheritdoc}
    */
   public function getLibraries(Editor $editor) {
     return [];
   }
-  
-    /**
+
+  /**
    * {@inheritdoc}
    */
   public function isInternal() {
@@ -49,18 +56,24 @@ class AnchorLink extends CKEditorPluginBase {
    * Implements \Drupal\ckeditor\Plugin\CKEditorPluginButtonsInterface::getButtons().
    */
   function getButtons() {
+    $path = 'libraries/ckeditor/plugins/link';
+    // Support for "Libaraies API" module.
+    if (\Drupal::moduleHandler()->moduleExists('libraries')) {
+      $path = libraries_get_path('ckeditor_anchor_link');
+    }
+
     return [
       'Link' => [
         'label' => t('Link'),
-        'image' => drupal_get_path('module', 'anchor_link') . '/js/plugins/link/icons/link.png',
+        'image' => $path . '/icons/link.png',
       ],
       'Unlink' => [
         'label' => t('Unlink'),
-        'image' => drupal_get_path('module', 'anchor_link') . '/js/plugins/link/icons/unlink.png',
+        'image' => $path . '/icons/unlink.png',
       ],
       'Anchor' => [
         'label' => t('Anchor'),
-        'image' => drupal_get_path('module', 'anchor_link') . '/js/plugins/link/icons/anchor.png',
+        'image' => $path . '/icons/anchor.png',
       ]
     ];
   }
