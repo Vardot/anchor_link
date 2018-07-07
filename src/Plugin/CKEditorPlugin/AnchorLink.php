@@ -17,16 +17,10 @@ use Drupal\ckeditor\CKEditorPluginBase;
 class AnchorLink extends CKEditorPluginBase {
 
   /**
-  * Implements \Drupal\ckeditor\Plugin\CKEditorPluginInterface::getFile().
-  */
-  function getFile() {
-    $path = 'libraries/ckeditor/plugins/link';
-    // Support for "Libaraies API" module.
-    if (\Drupal::moduleHandler()->moduleExists('libraries')) {
-      $path = libraries_get_path('ckeditor_anchor_link');
-    }
-
-    return $path . '/plugin.js';
+   * {@inheritdoc}
+   */
+  public function getFile() {
+    return $this->getLibraryPath() . '/plugin.js';
   }
 
   /**
@@ -53,14 +47,10 @@ class AnchorLink extends CKEditorPluginBase {
   }
 
   /**
-   * Implements \Drupal\ckeditor\Plugin\CKEditorPluginButtonsInterface::getButtons().
+   * {@inheritdoc}
    */
-  function getButtons() {
-    $path = 'libraries/ckeditor/plugins/link';
-    // Support for "Libaraies API" module.
-    if (\Drupal::moduleHandler()->moduleExists('libraries')) {
-      $path = libraries_get_path('ckeditor_anchor_link');
-    }
+  public function getButtons() {
+    $path = $this->getLibraryPath();
 
     return [
       'Link' => [
@@ -74,7 +64,7 @@ class AnchorLink extends CKEditorPluginBase {
       'Anchor' => [
         'label' => t('Anchor'),
         'image' => $path . '/icons/anchor.png',
-      ]
+      ],
     ];
   }
 
@@ -84,4 +74,20 @@ class AnchorLink extends CKEditorPluginBase {
   public function getConfig(Editor $editor) {
     return [];
   }
+
+  /**
+   * Get the CKEditor Link library path.
+   *
+   * @return string
+   *   The library path with support for the Libraries API module.
+   */
+  protected function getLibraryPath() {
+    // Support for "Libraries API" module.
+    if (\Drupal::moduleHandler()->moduleExists('libraries')) {
+      return libraries_get_path('link');
+    }
+
+    return 'libraries/link';
+  }
+
 }
