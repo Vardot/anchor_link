@@ -16,7 +16,7 @@ function anchor_link_requirements($phase) {
 
   $path = DRUPAL_ROOT . ANCHOR_LINK_LIBRARY_PATH;
   if (\Drupal::moduleHandler()->moduleExists('libraries')) {
-    $path = libraries_get_path('link') . '/plugin.js';
+    $path = \Drupal::service('libraries.manager')->load('link') . '/plugin.js';
   }
 
   // Is the library found in the root libraries path.
@@ -24,7 +24,7 @@ function anchor_link_requirements($phase) {
 
   // If library is not found, then look in the current profile libraries path.
   if (!$library_found) {
-    $profile_path = drupal_get_path('profile', drupal_get_profile());
+    $profile_path = drupal_get_path('profile', \Drupal::installProfile());
     $profile_path .= ANCHOR_LINK_LIBRARY_PATH;
     // Is the library found in the current profile libraries path.
     $library_found = file_exists(DRUPAL_ROOT . $profile_path);

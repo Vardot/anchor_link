@@ -54,15 +54,15 @@ class AnchorLink extends CKEditorPluginBase {
 
     return [
       'Link' => [
-        'label' => t('Link'),
+        'label' => $this->t('Link'),
         'image' => $path . '/icons/link.png',
       ],
       'Unlink' => [
-        'label' => t('Unlink'),
+        'label' => $this->t('Unlink'),
         'image' => $path . '/icons/unlink.png',
       ],
       'Anchor' => [
-        'label' => t('Anchor'),
+        'label' => $this->t('Anchor'),
         'image' => $path . '/icons/anchor.png',
       ],
     ];
@@ -84,7 +84,7 @@ class AnchorLink extends CKEditorPluginBase {
   protected function getLibraryPath() {
     // Support for "Libraries API" module.
     if (\Drupal::moduleHandler()->moduleExists('libraries')) {
-      return libraries_get_path('link');
+      return \Drupal::service('libraries.manager')->load('link');
     }
 
     return 'libraries/link';

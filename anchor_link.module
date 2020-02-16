@@ -44,6 +44,6 @@ function anchor_link_theme() {
 function anchor_link_library_info_alter(&$libraries, $extension) {
   // Add support for "Libraries API" module, if exists.
   if ($extension == 'link' && \Drupal::moduleHandler()->moduleExists('libraries')) {
-    $libraries['link']['js'] = ['/' . libraries_get_path('ckeditor_anchor_link') . '/plugin.js' => []];
+    $libraries['link']['js'] = ['/' . \Drupal::service('libraries.manager')->load('ckeditor_anchor_link') . '/plugin.js' => []];
   }
 }
