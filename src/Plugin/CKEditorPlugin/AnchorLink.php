@@ -4,7 +4,6 @@ namespace Drupal\anchor_link\Plugin\CKEditorPlugin;
 
 use Drupal\editor\Entity\Editor;
 use Drupal\ckeditor\CKEditorPluginBase;
-use Drupal\anchor_link\Library\AnchorLinkLibrary;
 
 /**
  * Defines the "link" plugin.
@@ -51,20 +50,20 @@ class AnchorLink extends CKEditorPluginBase {
    * {@inheritdoc}
    */
   public function getButtons() {
-    $path = $this->getLibraryPath();
+    $libraryUrl = $this->getLibraryUrl();
 
     return [
       'Link' => [
         'label' => $this->t('Link'),
-        'image' => $path . '/icons/link.png',
+        'image' => $libraryUrl . '/icons/link.png',
       ],
       'Unlink' => [
         'label' => $this->t('Unlink'),
-        'image' => $path . '/icons/unlink.png',
+        'image' => $libraryUrl . '/icons/unlink.png',
       ],
       'Anchor' => [
         'label' => $this->t('Anchor'),
-        'image' => $path . '/icons/anchor.png',
+        'image' => $libraryUrl . '/icons/anchor.png',
       ],
     ];
   }
@@ -80,35 +79,68 @@ class AnchorLink extends CKEditorPluginBase {
    * Get the CKEditor Link library path.
    */
   protected function getLibraryPath() {
-    static $library_path;
 
-    // Return early if we've already looked it up.
-    if ($library_path) {
-      return $library_path;
-    }
-
-    $path = AnchorLinkLibrary::PATH;
+    $librarayPath = DRUPAL_ROOT . '/libraries/link';
 
     // Is the library found in the root libraries path.
-    $library_found = file_exists(DRUPAL_ROOT . $path);
+    $libraryFound = file_exists($librarayPath);
 
     // If library is not found, then look in the current profile libraries path.
-    if (!$library_found) {
-      $profile_path = drupal_get_path('profile', \Drupal::installProfile());
-      $profile_path .= AnchorLinkLibrary::PATH;
+    if (!$libraryFound) {
+      $profilePath = drupal_get_path('profile', \Drupal::installProfile());
+      $profilePath .= '/libraries/link';
+
       // Is the library found in the current profile libraries path.
-      $library_found = file_exists(DRUPAL_ROOT . $profile_path);
-      $path = $profile_path;
+      if (file_exists(DRUPAL_ROOT . '/' . $profilePath)) {
+        $libraryFound = TRUE;
+        $librarayPath = DRUPAL_ROOT . '/' . $profilePath;
+      }
+      else {
+        $libraryFound = FALSE;
+      }
+
     }
 
-    if ($library_found) {
-      $library_path = $path;
+    if ($libraryFound) {
+      return $librarayPath;
     }
     else {
-      $library_path = 'libraries/link';
+      return 'libraries/link';
+    }
+  }
+
+  /**
+   * Get the CKEditor Link library URL.
+   */
+  protected function getLibraryUrl() {
+
+    $originUrl = \Drupal::request()->getSchemeAndHttpHost() . \Drupal::request()->getBaseUrl();
+
+    $librarayPath = DRUPAL_ROOT . '/libraries/link';
+    $librarayUrl = $originUrl . '/libraries/link';
+
+    // Is the library found in the root libraries path.
+    $libraryFound = file_exists($librarayPath);
+
+    // If library is not found, then look in the current profile libraries path.
+    if (!$libraryFound) {
+      $profilePath = drupal_get_path('profile', \Drupal::installProfile());
+      $profilePath .= '/libraries/link';
+
+      // Is the library found in the current profile libraries path.
+      if (file_exists(DRUPAL_ROOT . '/' . $profilePath)) {
+        $libraryFound = TRUE;
+        $librarayUrl = $originUrl . '/' . $profilePath;
+      }
+
     }
 
-    return $library_path;
+    if ($libraryFound) {
+      return $librarayUrl;
+    }
+    else {
+      return $originUrl . '/libraries/link';
+    }
   }
 
 }
