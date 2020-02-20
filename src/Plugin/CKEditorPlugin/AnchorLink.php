@@ -20,7 +20,7 @@ class AnchorLink extends CKEditorPluginBase {
    * {@inheritdoc}
    */
   public function getFile() {
-    return $this->getLibraryPath() . '/plugin.js';
+    return $this->getLibraryUrl() . '/plugin.js';
   }
 
   /**
@@ -83,7 +83,7 @@ class AnchorLink extends CKEditorPluginBase {
     $librarayPath = DRUPAL_ROOT . '/libraries/link';
 
     // Is the library found in the root libraries path.
-    $libraryFound = file_exists($librarayPath);
+    $libraryFound = file_exists($librarayPath . '/plugin.js');
 
     // If library is not found, then look in the current profile libraries path.
     if (!$libraryFound) {
@@ -91,7 +91,7 @@ class AnchorLink extends CKEditorPluginBase {
       $profilePath .= '/libraries/link';
 
       // Is the library found in the current profile libraries path.
-      if (file_exists(DRUPAL_ROOT . '/' . $profilePath)) {
+      if (file_exists(DRUPAL_ROOT . '/' . $profilePath . '/plugin.js')) {
         $libraryFound = TRUE;
         $librarayPath = DRUPAL_ROOT . '/' . $profilePath;
       }
@@ -120,7 +120,7 @@ class AnchorLink extends CKEditorPluginBase {
     $librarayUrl = $originUrl . '/libraries/link';
 
     // Is the library found in the root libraries path.
-    $libraryFound = file_exists($librarayPath);
+    $libraryFound = file_exists($librarayPath . '/plugin.js');
 
     // If library is not found, then look in the current profile libraries path.
     if (!$libraryFound) {
@@ -128,7 +128,7 @@ class AnchorLink extends CKEditorPluginBase {
       $profilePath .= '/libraries/link';
 
       // Is the library found in the current profile libraries path.
-      if (file_exists(DRUPAL_ROOT . '/' . $profilePath)) {
+      if (file_exists(DRUPAL_ROOT . '/' . $profilePath . '/plugin.js')) {
         $libraryFound = TRUE;
         $librarayUrl = $originUrl . '/' . $profilePath;
       }
