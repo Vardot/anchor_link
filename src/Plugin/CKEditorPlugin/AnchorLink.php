@@ -4,6 +4,7 @@ namespace Drupal\anchor_link\Plugin\CKEditorPlugin;
 
 use Drupal\editor\Entity\Editor;
 use Drupal\ckeditor\CKEditorPluginBase;
+use Drupal\anchor_link\Library\AnchorLinkLibrary;
 
 /**
  * Defines the "link" plugin.
@@ -15,11 +16,6 @@ use Drupal\ckeditor\CKEditorPluginBase;
  * )
  */
 class AnchorLink extends CKEditorPluginBase {
-
-  /**
-   * Anchor Link default link library path.
-   */
-  const LIBRARY_PATH = '/libraries/link';
 
   /**
    * {@inheritdoc}
@@ -91,7 +87,7 @@ class AnchorLink extends CKEditorPluginBase {
       return $library_path;
     }
 
-    $path = AnchorLink::LIBRARY_PATH;
+    $path = AnchorLinkLibrary::PATH;
 
     // Is the library found in the root libraries path.
     $library_found = file_exists(DRUPAL_ROOT . $path);
@@ -99,7 +95,7 @@ class AnchorLink extends CKEditorPluginBase {
     // If library is not found, then look in the current profile libraries path.
     if (!$library_found) {
       $profile_path = drupal_get_path('profile', \Drupal::installProfile());
-      $profile_path .= AnchorLink::LIBRARY_PATH;
+      $profile_path .= AnchorLinkLibrary::PATH;
       // Is the library found in the current profile libraries path.
       $library_found = file_exists(DRUPAL_ROOT . $profile_path);
       $path = $profile_path;
