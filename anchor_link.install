@@ -5,7 +5,7 @@
  * Install, update and uninstall functions for the anchor_link module.
  */
 
-define("ANCHOR_LINK_LIBRARY_PATH", '/libraries/link/plugin.js');
+use Drupal\anchor_link\Plugin\CKEditorPlugin\AnchorLink;
 
 /**
  * Implements hook_requirements().
@@ -15,15 +15,13 @@ function anchor_link_requirements($phase) {
 
   if ($phase == 'install' || $phase == 'runtime') {
 
-    $path = DRUPAL_ROOT . ANCHOR_LINK_LIBRARY_PATH;
-
     // Is the library found in the root libraries path.
-    $library_found = file_exists($path);
+    $library_found = file_exists(DRUPAL_ROOT . AnchorLink::LIBRARY_PATH);
 
     // If library is not found, then look in the current profile libraries path.
     if (!$library_found) {
       $profile_path = drupal_get_path('profile', \Drupal::installProfile());
-      $profile_path .= ANCHOR_LINK_LIBRARY_PATH;
+      $profile_path .= AnchorLink::LIBRARY_PATH;
       // Is the library found in the current profile libraries path.
       $library_found = file_exists(DRUPAL_ROOT . $profile_path);
     }

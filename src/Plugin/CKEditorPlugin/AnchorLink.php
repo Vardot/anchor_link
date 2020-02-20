@@ -17,6 +17,11 @@ use Drupal\ckeditor\CKEditorPluginBase;
 class AnchorLink extends CKEditorPluginBase {
 
   /**
+   * Anchor Link default link library path.
+   */
+  const LIBRARY_PATH = '/libraries/link';
+
+  /**
    * {@inheritdoc}
    */
   public function getFile() {
@@ -79,27 +84,35 @@ class AnchorLink extends CKEditorPluginBase {
    * Get the CKEditor Link library path.
    */
   protected function getLibraryPath() {
+    static $library_path;
 
-    $path = DRUPAL_ROOT . ANCHOR_LINK_LIBRARY_PATH;
+    // Return early if we've already looked it up.
+    if ($library_path) {
+      return $library_path;
+    }
+
+    $path = AnchorLink::LIBRARY_PATH;
 
     // Is the library found in the root libraries path.
-    $library_found = file_exists($path);
+    $library_found = file_exists(DRUPAL_ROOT . $path);
 
     // If library is not found, then look in the current profile libraries path.
     if (!$library_found) {
       $profile_path = drupal_get_path('profile', \Drupal::installProfile());
-      $profile_path .= ANCHOR_LINK_LIBRARY_PATH;
+      $profile_path .= AnchorLink::LIBRARY_PATH;
       // Is the library found in the current profile libraries path.
       $library_found = file_exists(DRUPAL_ROOT . $profile_path);
-      $path = DRUPAL_ROOT . $profile_path;
+      $path = $profile_path;
     }
 
     if ($library_found) {
-      return $path;
+      $library_path = $path;
     }
     else {
-      return 'libraries/link';
+      $library_path = 'libraries/link';
     }
+
+    return $library_path;
   }
 
 }
