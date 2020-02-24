@@ -20,7 +20,7 @@ class AnchorLink extends CKEditorPluginBase {
    * {@inheritdoc}
    */
   public function getFile() {
-    return $this->getLibraryUrl() . '/plugin.js';
+    return $this->getLibraryPath() . '/plugin.js';
   }
 
   /**
@@ -79,34 +79,33 @@ class AnchorLink extends CKEditorPluginBase {
    * Get the CKEditor Link library path.
    */
   protected function getLibraryPath() {
+    // Following the logic in Drupal 8.9.x and Drupal 9.x
+    // ----------------------------------------------------------------------
+    // Issue #3096648: Add support for third party libraries in site specific
+    // and install profile specific libraries folders
+    // https://www.drupal.org/project/drupal/issues/3096648
+    //
+    // https://git.drupalcode.org/project/drupal/commit/1edf15f
+    // -----------------------------------------------------------------------
+    // Search sites/<domain>/*.
+    $directories[] = \Drupal::service('site.path') . "/libraries/";
 
-    $librarayPath = DRUPAL_ROOT . '/libraries/link';
+    // Always search the root 'libraries' directory.
+    $directories[] = 'libraries/';
 
-    // Is the library found in the root libraries path.
-    $libraryFound = file_exists($librarayPath . '/plugin.js');
+    // Installation profiles can place libraries into a 'libraries' directory.
+    if ($this->installProfile) {
+      $profile_path = drupal_get_path('profile', \Drupal::installProfile());
+      $directories[] = "$profile_path/libraries/";
+    }
 
-    // If library is not found, then look in the current profile libraries path.
-    if (!$libraryFound) {
-      $profilePath = drupal_get_path('profile', \Drupal::installProfile());
-      $profilePath .= '/libraries/link';
-
-      // Is the library found in the current profile libraries path.
-      if (file_exists(DRUPAL_ROOT . '/' . $profilePath . '/plugin.js')) {
-        $libraryFound = TRUE;
-        $librarayPath = DRUPAL_ROOT . '/' . $profilePath;
+    foreach ($directories as $dir) {
+      if (file_exists(DRUPAL_ROOT . '/' . $dir . 'link/plugin.js')) {
+        return $dir . 'link';
       }
-      else {
-        $libraryFound = FALSE;
-      }
-
     }
 
-    if ($libraryFound) {
-      return $librarayPath;
-    }
-    else {
-      return 'libraries/link';
-    }
+    return 'libraries/link';
   }
 
   /**
