@@ -94,8 +94,8 @@ class AnchorLink extends CKEditorPluginBase {
     $directories[] = 'libraries/';
 
     // Installation profiles can place libraries into a 'libraries' directory.
-    if ($this->installProfile) {
-      $profile_path = drupal_get_path('profile', \Drupal::installProfile());
+    if ($installProfile = \Drupal::installProfile()) {
+      $profile_path = drupal_get_path('profile', $installProfile);
       $directories[] = "$profile_path/libraries/";
     }
 
@@ -123,15 +123,16 @@ class AnchorLink extends CKEditorPluginBase {
 
     // If library is not found, then look in the current profile libraries path.
     if (!$libraryFound) {
-      $profilePath = drupal_get_path('profile', \Drupal::installProfile());
-      $profilePath .= '/libraries/link';
+      if ($installProfile = \Drupal::installProfile()) {
+        $profilePath = drupal_get_path('profile', $installProfile);
+        $profilePath .= '/libraries/link';
 
-      // Is the library found in the current profile libraries path.
-      if (file_exists(DRUPAL_ROOT . '/' . $profilePath . '/plugin.js')) {
-        $libraryFound = TRUE;
-        $librarayUrl = $originUrl . '/' . $profilePath;
+        // Is the library found in the current profile libraries path.
+        if (file_exists(DRUPAL_ROOT . '/' . $profilePath . '/plugin.js')) {
+          $libraryFound = TRUE;
+          $librarayUrl = $originUrl . '/' . $profilePath;
+        }
       }
-
     }
 
     if ($libraryFound) {
