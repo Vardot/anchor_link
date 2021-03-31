@@ -42,5 +42,7 @@ function anchor_link_theme() {
  * Implements hook_page_attachments().
  */
 function anchor_link_page_attachments(array &$attachments) {
-  $attachments['#attached']['library'][] = 'anchor_link/drupal.anchor_link';
+  if (\Drupal::currentUser()->isAuthenticated()) {
+    $attachments['#attached']['library'][] = 'anchor_link/drupal.anchor_link';
+  }
 }
