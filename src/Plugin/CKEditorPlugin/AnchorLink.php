@@ -53,7 +53,7 @@ class AnchorLink extends CKEditorPluginBase {
     $libraryUrl = $this->getLibraryUrl();
 
     return [
-      'LinkToAnchor' => [
+      'Link' => [
         'label' => $this->t('Link to anchor'),
         'image' => $libraryUrl . '/icons/link.png',
       ],
