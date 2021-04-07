@@ -29,7 +29,6 @@
   "require": {
     "drupal/core": "*",
     "drupal/fakeobjects": "^1.0",
-    "drupal-ckeditor-plugin/link": "~4.0",
     "drupal-ckeditor-plugin/fakeobjects": "~4.0"
   },
   "extra": {
