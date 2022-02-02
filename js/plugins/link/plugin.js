@@ -96,6 +96,26 @@
 			CKEDITOR.dialog.add( 'link', this.path + 'dialogs/link.js' );
 			CKEDITOR.dialog.add( 'anchor', this.path + 'dialogs/anchor.js' );
 
+			// If the "menu" plugin is loaded, register the menu items.
+			if ( editor.addMenuItems ) {
+				editor.addMenuItems( {
+					anchor: {
+						label: editor.lang.link.anchor.menu,
+						command: 'anchor',
+						group: 'anchor',
+						order: 1
+					},
+
+					removeAnchor: {
+						label: editor.lang.link.anchor.remove,
+						command: 'removeAnchor',
+						group: 'anchor',
+						order: 5
+					},
+
+				} );
+			}
+
 			// If the "contextmenu" plugin is loaded, register the listeners.
 			if ( editor.contextMenu ) {
 				editor.contextMenu.addListener( function( element ) {
