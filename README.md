@@ -11,7 +11,7 @@ to CKEditor in Drupal 8:
 Most text formats limit HTML tags. If this is the case, it will
  be necessary to whitelist the "name" attribute on the "a" element.
 
-E.g. `<a href name>`
+E.g. `<a name href hreflang>`
 
 
 ### Requirements
