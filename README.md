@@ -9,4 +9,10 @@ to CKEditor in Drupal 8:
 - Ability to insert a link with the URL using multiple protocols, including an
   external file if a file manager is integrated.
 
+Most text formats limit HTML tags. If this is the case, it will
+ be necessary to whitelist the "name" attribute on the "a" element.
+
+E.g. `<a href name>`
+
+
 http://ckeditor.com/addon/link
