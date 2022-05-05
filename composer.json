@@ -23,7 +23,7 @@
     }
   ],
   "require": {
-    "drupal/core": "*",
+    "drupal/core": "^8 || ^9 || ^10",
     "drupal/fakeobjects": "^1.0"
   },
   "extra": {
