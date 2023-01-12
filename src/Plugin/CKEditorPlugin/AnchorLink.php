@@ -20,7 +20,8 @@ class AnchorLink extends CKEditorPluginBase {
    * Implements \Drupal\ckeditor\Plugin\CKEditorPluginInterface::getFile().
    */
   public function getFile() {
-    return drupal_get_path('module', 'anchor_link') . '/js/plugins/link/plugin.js';
+    $anchor_link_path = \Drupal::service('extension.list.module')->getPath('anchor_link');
+    return $anchor_link_path . '/js/plugins/link/plugin.js';
   }
 
   /**
@@ -50,18 +51,21 @@ class AnchorLink extends CKEditorPluginBase {
    * {@inheritdoc}
    */
   public function getButtons() {
+
+    $anchor_link_path = \Drupal::service('extension.list.module')->getPath('anchor_link');
+
     return [
       'LinkToAnchor' => [
         'label' => $this->t('Link to anchor'),
-        'image' => drupal_get_path('module', 'anchor_link') . '/js/plugins/link/icons/link.png',
+        'image' => $anchor_link_path . '/js/plugins/link/icons/link.png',
       ],
       'UnlinkAnchor' => [
         'label' => $this->t('Unlink Anchor'),
-        'image' => drupal_get_path('module', 'anchor_link') . '/js/plugins/link/icons/unlink.png',
+        'image' => $anchor_link_path . '/js/plugins/link/icons/unlink.png',
       ],
       'Anchor' => [
         'label' => $this->t('Anchor'),
-        'image' => drupal_get_path('module', 'anchor_link') . '/js/plugins/link/icons/anchor.png',
+        'image' => $anchor_link_path . '/js/plugins/link/icons/anchor.png',
       ],
     ];
   }
