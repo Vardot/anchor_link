@@ -88,14 +88,14 @@ class AnchorLink extends CKEditorPluginBase {
     // https://git.drupalcode.org/project/drupal/commit/1edf15f
     // -----------------------------------------------------------------------
     // Search sites/<domain>/*.
-    $directories[] = \Drupal::service('site.path') . "/libraries/";
+    $directories[] = \Drupal::getContainer()->getParameter('site.path') . "/libraries/";
 
     // Always search the root 'libraries' directory.
     $directories[] = 'libraries/';
 
     // Installation profiles can place libraries into a 'libraries' directory.
     if ($installProfile = \Drupal::installProfile()) {
-      $profile_path = drupal_get_path('profile', $installProfile);
+      $profile_path = \Drupal::service('extension.list.profile')->getPath($installProfile);
       $directories[] = "$profile_path/libraries/";
     }
 
