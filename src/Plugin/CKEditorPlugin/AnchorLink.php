@@ -124,7 +124,7 @@ class AnchorLink extends CKEditorPluginBase {
     // If library is not found, then look in the current profile libraries path.
     if (!$libraryFound) {
       if ($installProfile = \Drupal::installProfile()) {
-        $profilePath = drupal_get_path('profile', $installProfile);
+        $profilePath = \Drupal::service('extension.list.profile')->getPath($installProfile);
         $profilePath .= '/libraries/link';
 
         // Is the library found in the current profile libraries path.
