@@ -1,7 +1,7 @@
 # CKEditor Anchor Link
 
 This plugin module adds the better link dialog and anchor related features
-to CKEditor in Drupal 8:
+to CKEditor in Drupal:
 
 - Dialog to insert links and anchors with some properties.
 - Context menu option to edit or remove links and anchors.
