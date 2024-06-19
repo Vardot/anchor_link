@@ -1,6 +1,6 @@
 {
   "name": "drupal/anchor_link",
-  "description": "This plugin module adds the better link dialog and anchor related features to CKEditor in Drupal 9.",
+  "description": "This plugin module adds the better link dialog and anchor related features to CKEditor in Drupal.",
   "type": "drupal-module",
   "homepage": "https://www.drupal.org/project/anchor_link",
   "license": "GPL-2.0-or-later",
@@ -9,6 +9,11 @@
     {
       "name": "Vardot",
       "homepage": "https://www.drupal.org/vardot",
+      "role": "Maintainer"
+    },
+    {
+      "name": "Northern Commerce",
+      "homepage": "https://www.drupal.org/northern-commerce",
       "role": "Maintainer"
     }
   ],
@@ -23,7 +28,7 @@
     }
   },
   "require": {
-    "drupal/core": "^9 || ^10"
+    "drupal/core": "^9 || ^10 || ^11"
   },
   "extra": {
     "branch-alias": {
