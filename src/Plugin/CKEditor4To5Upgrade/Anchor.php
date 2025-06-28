@@ -26,7 +26,7 @@ class Anchor extends PluginBase implements CKEditor4To5UpgradePluginInterface {
    */
   public function mapCKEditor4ToolbarButtonToCKEditor5ToolbarItem(
     string $cke4_button,
-    HTMLRestrictions $text_format_html_restrictions
+    HTMLRestrictions $text_format_html_restrictions,
   ): ?array {
     if ($cke4_button === 'Anchor') {
       return ['anchor'];
