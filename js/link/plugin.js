@@ -11,7 +11,7 @@
         lang: 'af,ar,az,bg,bn,bs,ca,cs,cy,da,de,de-ch,el,en,en-au,en-ca,en-gb,eo,es,es-mx,et,eu,fa,fi,fo,fr,fr-ca,gl,gu,he,hi,hr,hu,id,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,oc,pl,pt,pt-br,ro,ru,si,sk,sl,sq,sr,sr-latn,sv,th,tr,tt,ug,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
         // jscs:enable maximumLineLength
         icons: 'link', // %REMOVE_LINE_CORE%
-        hidpi: TRUE, // %REMOVE_LINE_CORE%
+        hidpi: true, // %REMOVE_LINE_CORE%
         onLoad: function () {
 
             var template = '.%2 a.cke_anchor,' +
@@ -79,7 +79,7 @@
                 // If the link has descendants and the last part of it is also a part of a word partially
                 // unlinked, clicked element may be a descendant of the link, not the link itself (https://dev.ckeditor.com/ticket/11956).
                 // The evt.data.element.getAscendant( 'img', 1 ) condition allows opening anchor dialog if the anchor is empty (#501).
-                var element = evt.data.element.getAscendant( { a: 1, img: 1 }, TRUE );
+                var element = evt.data.element.getAscendant( { a: 1, img: 1 }, true );
 
                 if ( element && !element.isReadOnly() ) {
                     if ( element.is( 'a' ) ) {
@@ -91,7 +91,7 @@
                         evt.data.dialog = 'anchor';
                     }
                 }
-            }, NULL, NULL, 0 );
+            }, null, null, 0 );
 
             // If event was cancelled, link passed in event data will not be selected.
             editor.on( 'doubleclick', function ( evt ) {
@@ -99,7 +99,7 @@
                 if ( evt.data.dialog in { link: 1, anchor: 1 } && evt.data.link ) {
                     editor.getSelection().selectElement( evt.data.link );
                 }
-            }, NULL, NULL, 20 );
+            }, null, null, 20 );
 
             // If the "menu" plugin is loaded, register the menu items.
             if ( editor.addMenuItems ) {
@@ -118,13 +118,13 @@
             if ( editor.contextMenu ) {
                 editor.contextMenu.addListener( function ( element ) {
                     if ( !element || element.isReadOnly() ) {
-                        return NULL;
+                        return null;
                     }
 
                     var anchor = CKEDITOR.plugins.link.tryRestoreFakeAnchor( editor, element );
 
                     if ( !anchor && !( anchor = CKEDITOR.plugins.link.getSelectedLink( editor ) ) ) {
-                        return NULL;
+                        return null;
                     }
 
                     var menu = {};
@@ -280,7 +280,7 @@
 
                 // Skip bogus to cover cases of multiple selection inside tables (#tp2245).
                 // Shrink to element to prevent losing anchor (#859).
-                range.shrink( CKEDITOR.SHRINK_ELEMENT, TRUE, { skipBogus: TRUE } );
+                range.shrink( CKEDITOR.SHRINK_ELEMENT, true, { skipBogus: true } );
                 link = editor.elementPath( range.getCommonAncestor() ).contains( 'a', 1 );
 
                 if ( link && returnMultiple ) {
@@ -290,7 +290,7 @@
                 }
             }
 
-            return returnMultiple ? links : NULL;
+            return returnMultiple ? links : null;
         },
 
         /**
@@ -347,7 +347,7 @@
          * @deprecated 4.3.3 It is set to `true` in every browser.
          * @property {Boolean}
          */
-        fakeAnchor: TRUE,
+        fakeAnchor: true,
 
         /**
          * For browsers that do not support CSS3 `a[name]:empty()`. Note that IE9 is included because of https://dev.ckeditor.com/ticket/7783.
@@ -490,7 +490,7 @@
                         while ( ( featureMatch = popupFeaturesRegex.exec( onclickMatch[ 2 ] ) ) ) {
                             // Some values should remain numbers (https://dev.ckeditor.com/ticket/7300)
                             if ( ( featureMatch[ 2 ] == 'yes' || featureMatch[ 2 ] == '1' ) && !( featureMatch[ 1 ] in { height: 1, width: 1, top: 1, left: 1 } ) ) {
-                                retval.target[ featureMatch[ 1 ] ] = TRUE;
+                                retval.target[ featureMatch[ 1 ] ] = true;
                             } else if ( isFinite( featureMatch[ 2 ] ) ) {
                                 retval.target[ featureMatch[ 1 ] ] = featureMatch[ 2 ];
                             }
@@ -504,8 +504,8 @@
                 }
 
                 var download = element.getAttribute( 'download' );
-                if ( download !== NULL ) {
-                    retval.download = TRUE;
+                if ( download !== null ) {
+                    retval.download = true;
                 }
 
                 var advanced = {};
@@ -725,11 +725,11 @@
 
             // Widget duck typing, we don't want to show display text for widgets.
             if ( editor.widgets && editor.widgets.focused ) {
-                return FALSE;
+                return false;
             }
 
             if ( selection && selection.getRanges().length > 1 ) {
-                return FALSE;
+                return false;
             }
 
             return !element || !element.getName || !element.is( undesiredElements );
@@ -746,8 +746,8 @@
             // position of cursor must be restored to its initial state after unlinking. (https://dev.ckeditor.com/ticket/13062)
             if ( CKEDITOR.env.ie ) {
                 var range = editor.getSelection().getRanges()[ 0 ],
-                    link = ( range.getPreviousEditableNode() && range.getPreviousEditableNode().getAscendant( 'a', TRUE ) ) ||
-                        ( range.getNextEditableNode() && range.getNextEditableNode().getAscendant( 'a', TRUE ) ),
+                    link = ( range.getPreviousEditableNode() && range.getPreviousEditableNode().getAscendant( 'a', true ) ) ||
+                        ( range.getNextEditableNode() && range.getNextEditableNode().getAscendant( 'a', true ) ),
                     bookmark;
 
                 if ( range.collapsed && link ) {
@@ -770,7 +770,7 @@
             // Despite our initial hope, document.queryCommandEnabled() does not work
             // for this in Firefox. So we must detect the state by element paths.
 
-            var element = path.lastElement && path.lastElement.getAscendant( 'a', TRUE );
+            var element = path.lastElement && path.lastElement.getAscendant( 'a', true );
 
             if ( element && element.getName() == 'a' && element.getAttribute( 'href' ) && element.getChildCount() ) {
                 this.setState( CKEDITOR.TRISTATE_OFF );
@@ -792,7 +792,7 @@
          * @cfg {Boolean} [linkShowAdvancedTab=true]
          * @member CKEDITOR.config
          */
-        linkShowAdvancedTab: TRUE,
+        linkShowAdvancedTab: true,
 
         /**
          * Whether to show the Target tab in the Link dialog window.
@@ -800,7 +800,7 @@
          * @cfg {Boolean} [linkShowTargetTab=true]
          * @member CKEDITOR.config
          */
-        linkShowTargetTab: TRUE,
+        linkShowTargetTab: true,
 
         /**
          * Default URL protocol used for the Link dialog.

@@ -42,7 +42,7 @@ CKEDITOR.dialog.add( 'anchor', function ( editor ) {
         minWidth: 300,
         minHeight: 60,
         getModel: function ( editor ) {
-            return getSelectedAnchor( editor.getSelection() ) || NULL;
+            return getSelectedAnchor( editor.getSelection() ) || null;
         },
         onOk: function () {
             var name = CKEDITOR.tools.trim( this.getValueOf( 'info', 'txtName' ) ),
@@ -109,13 +109,13 @@ CKEDITOR.dialog.add( 'anchor', function ( editor ) {
                 type: 'text',
                 id: 'txtName',
                 label: editor.lang.anchor.anchor.name,
-                required: TRUE,
+                required: true,
                 validate: function () {
                     if ( !this.getValue() ) {
                         alert( editor.lang.anchor.anchor.errorName ); // jshint ignore:line
-                        return FALSE;
+                        return false;
                     }
-                    return TRUE;
+                    return true;
                 }
             } ]
         } ]

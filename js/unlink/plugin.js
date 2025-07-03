@@ -11,7 +11,7 @@
         lang: 'af,ar,az,bg,bn,bs,ca,cs,cy,da,de,de-ch,el,en,en-au,en-ca,en-gb,eo,es,es-mx,et,eu,fa,fi,fo,fr,fr-ca,gl,gu,he,hi,hr,hu,id,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,oc,pl,pt,pt-br,ro,ru,si,sk,sl,sq,sr,sr-latn,sv,th,tr,tt,ug,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
         // jscs:enable maximumLineLength
         icons: 'unlink', // %REMOVE_LINE_CORE%
-        hidpi: TRUE, // %REMOVE_LINE_CORE%
+        hidpi: true, // %REMOVE_LINE_CORE%
         onLoad: function () {
 
             var template = '.%2 a.cke_anchor,' +
@@ -208,7 +208,7 @@
 
                 // Skip bogus to cover cases of multiple selection inside tables (#tp2245).
                 // Shrink to element to prevent losing anchor (#859).
-                range.shrink( CKEDITOR.SHRINK_ELEMENT, TRUE, { skipBogus: TRUE } );
+                range.shrink( CKEDITOR.SHRINK_ELEMENT, true, { skipBogus: true } );
                 link = editor.elementPath( range.getCommonAncestor() ).contains( 'a', 1 );
 
                 if ( link && returnMultiple ) {
@@ -218,7 +218,7 @@
                 }
             }
 
-            return returnMultiple ? links : NULL;
+            return returnMultiple ? links : null;
         },
 
         /**
@@ -245,11 +245,11 @@
 
             // Widget duck typing, we don't want to show display text for widgets.
             if ( editor.widgets && editor.widgets.focused ) {
-                return FALSE;
+                return false;
             }
 
             if ( selection && selection.getRanges().length > 1 ) {
-                return FALSE;
+                return false;
             }
 
             return !element || !element.getName || !element.is( undesiredElements );
@@ -264,8 +264,8 @@
             // position of cursor must be restored to its initial state after unlinking. (https://dev.ckeditor.com/ticket/13062)
             if ( CKEDITOR.env.ie ) {
                 var range = editor.getSelection().getRanges()[ 0 ],
-                    link = ( range.getPreviousEditableNode() && range.getPreviousEditableNode().getAscendant( 'a', TRUE ) ) ||
-                        ( range.getNextEditableNode() && range.getNextEditableNode().getAscendant( 'a', TRUE ) ),
+                    link = ( range.getPreviousEditableNode() && range.getPreviousEditableNode().getAscendant( 'a', true ) ) ||
+                        ( range.getNextEditableNode() && range.getNextEditableNode().getAscendant( 'a', true ) ),
                     bookmark;
 
                 if ( range.collapsed && link ) {
@@ -288,7 +288,7 @@
             // Despite our initial hope, document.queryCommandEnabled() does not work
             // for this in Firefox. So we must detect the state by element paths.
 
-            var element = path.lastElement && path.lastElement.getAscendant( 'a', TRUE );
+            var element = path.lastElement && path.lastElement.getAscendant( 'a', true );
 
             if ( element && element.getName() == 'a' && element.getAttribute( 'href' ) && element.getChildCount() ) {
                 this.setState( CKEDITOR.TRISTATE_OFF );

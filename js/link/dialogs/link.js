@@ -62,7 +62,7 @@
                 nestedLinks = range._find( 'a' );
 
                 for    ( j = 0; j < nestedLinks.length; j++ ) {
-                    nestedLinks[ j ].remove( TRUE );
+                    nestedLinks[ j ].remove( true );
                 }
 
                 // Apply style.
@@ -229,8 +229,8 @@
             minWidth: ( CKEDITOR.skinName || editor.config.skin ) == 'moono-lisa' ? 450 : 350,
             minHeight: 240,
             getModel: function ( editor ) {
-                var elements = plugin.getSelectedLink( editor, TRUE ),
-                    firstLink = elements[ 0 ] || NULL;
+                var elements = plugin.getSelectedLink( editor, true ),
+                    firstLink = elements[ 0 ] || null;
 
                 return firstLink;
             },
@@ -310,12 +310,12 @@
                             type: 'text',
                             id: 'url',
                             label: commonLang.url,
-                            required: TRUE,
+                            required: true,
                             onLoad: function () {
-                                this.allowOnChange = TRUE;
+                                this.allowOnChange = true;
                             },
                             onKeyUp: function () {
-                                this.allowOnChange = FALSE;
+                                this.allowOnChange = false;
                                 var protocolCmb = this.getDialog().getContentElement( 'info', 'protocol' ),
                                     url = this.getValue(),
                                     urlOnChangeProtocol = /^(http|https|ftp|news):\/\/(?=.)/i,
@@ -329,7 +329,7 @@
                                     protocolCmb.setValue( '' );
                                 }
 
-                                this.allowOnChange = TRUE;
+                                this.allowOnChange = true;
                             },
                             onChange: function () {
                                 // Dont't call on dialog load.
@@ -341,28 +341,28 @@
                                 var dialog = this.getDialog();
 
                                 if ( dialog.getContentElement( 'info', 'linkType' ) && dialog.getValueOf( 'info', 'linkType' ) != 'url' ) {
-                                    return TRUE;
+                                    return true;
                                 }
 
                                 if ( !editor.config.linkJavaScriptLinksAllowed && ( /javascript\:/ ).test( this.getValue() ) ) {
                                     alert( commonLang.invalidValue ); // jshint ignore:line
-                                    return FALSE;
+                                    return false;
                                 }
 
                                 // Edit Anchor.
                                 if ( this.getDialog().fakeObj ) {
-                                    return TRUE;
+                                    return true;
                                 }
 
                                 var func = CKEDITOR.dialog.validate.notEmpty( linkLang.noUrl );
                                 return func.apply( this );
                             },
                             setup: function ( data ) {
-                                this.allowOnChange = FALSE;
+                                this.allowOnChange = false;
                                 if ( data.url ) {
                                     this.setValue( data.url.url );
                                 }
-                                this.allowOnChange = TRUE;
+                                this.allowOnChange = true;
 
                             },
                             commit: function ( data ) {
@@ -375,7 +375,7 @@
                                 }
 
                                 data.url.url = this.getValue();
-                                this.allowOnChange = FALSE;
+                                this.allowOnChange = false;
                             }
                         } ],
                         setup: function () {
@@ -492,7 +492,7 @@
                         style: 'text-align: center;',
                         html: '<div role="note" tabIndex="-1">' + CKEDITOR.tools.htmlEncode( linkLang.noAnchors ) + '</div>',
                         // Focus the first element defined in above html.
-                        focus: TRUE,
+                        focus: true,
                         setup: function () {
                             this.getElement()[ anchors && anchors.length ? 'hide' : 'show' ]();
                         }
@@ -511,12 +511,12 @@
                         type: 'text',
                         id: 'emailAddress',
                         label: linkLang.emailAddress,
-                        required: TRUE,
+                        required: true,
                         validate: function () {
                             var dialog = this.getDialog();
 
                             if ( !dialog.getContentElement( 'info', 'linkType' ) || dialog.getValueOf( 'info', 'linkType' ) != 'email' ) {
-                                return TRUE;
+                                return true;
                             }
 
                             var func = CKEDITOR.dialog.validate.notEmpty( linkLang.noEmail );
@@ -590,7 +590,7 @@
                         type: 'tel',
                         id: 'telNumber',
                         label: linkLang.phoneNumber,
-                        required: TRUE,
+                        required: true,
                         validate: validateTelNumber,
                         setup: function ( data ) {
                             if ( data.tel ) {
@@ -796,7 +796,7 @@
                 id: 'upload',
                 label: linkLang.upload,
                 title: linkLang.upload,
-                hidden: TRUE,
+                hidden: true,
                 filebrowser: 'uploadButton',
                 elements: [ {
                     type: 'file',
@@ -986,8 +986,8 @@
                 var editor = this.getParentEditor(),
                     selection = editor.getSelection(),
                     displayTextField = this.getContentElement( 'info', 'linkDisplayText' ).getElement().getParent().getParent(),
-                    elements = plugin.getSelectedLink( editor, TRUE ),
-                    firstLink = elements[ 0 ] || NULL;
+                    elements = plugin.getSelectedLink( editor, true ),
+                    firstLink = elements[ 0 ] || null;
 
                 // Fill in all the relevant fields if there's already one link selected.
                 if ( firstLink && firstLink.hasAttribute( 'href' ) ) {
@@ -1057,10 +1057,10 @@
             messageWhenEmpty = CKEDITOR.dialog.validate.notEmpty( linkLang.noTel ).apply( this );
 
         if ( !dialog.getContentElement( 'info', 'linkType' ) || dialog.getValueOf( 'info', 'linkType' ) != 'tel' ) {
-            return TRUE;
+            return true;
         }
 
-        if ( messageWhenEmpty !== TRUE ) {
+        if ( messageWhenEmpty !== true ) {
             return messageWhenEmpty;
         }
 
