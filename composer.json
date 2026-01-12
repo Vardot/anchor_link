@@ -29,6 +29,6 @@
   },
   "require": {
     "drupal/core": "^9 || ^10 || ^11",
-    "vardot/ckeditor5-anchor-drupal": "^1.0.3 || ^2.0.3"
+    "vardot/ckeditor5-anchor-drupal": "^1.0.3 || ^2.0.4"
   }
 }
