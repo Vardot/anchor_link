@@ -1,52 +1,213 @@
-################
-# DrupalCI GitLabCI template
+################################################################################
+# GitLab CI for the CKEditor Anchor Link (anchor_link) module.
 #
-# Gitlab-ci.yml to replicate DrupalCI testing for Contrib
+# Two halves:
+#   1. The standard Drupal CI validation jobs (composer, cspell, eslint, phpcs,
+#      phpstan, phpunit) provided by the drupalci templates. Every job is
+#      blocking (allow_failure: false).
+#   2. Two webship-js BDD browser-test jobs (Playwright + Cucumber-js):
+#        - webship-js-drupal-core-test → Drupal Core (Standard profile); the
+#          tests/features/drupal/** suite against a freshly installed site with
+#          the module enabled and the Anchor Test recipe applied.
+#        - webship-js-drupal-cms-test  → Drupal CMS distribution; the
+#          tests/features/drupalcms/** suite against a fresh drupal/cms build
+#          with the Anchor button added to Drupal CMS's content_format.
 #
-# With thanks to:
-#   * The GitLab Acceleration Initiative participants
-#   * DrupalSpoons
-################
-
-################
-# Guidelines
-#
-# This template is designed to give any Contrib maintainer everything they need to test, without requiring modification. It is also designed to keep up to date with Core Development automatically through the use of include files that can be centrally maintained.
-#
-# However, you can modify this template if you have additional needs for your project.
-################
-
-################
-# Includes
-#
-# Additional configuration can be provided through includes.
-# One advantage of include files is that if they are updated upstream, the changes affect all pipelines using that include.
-#
-# Includes can be overridden by re-declaring anything provided in an include, here in gitlab-ci.yml
-# https://docs.gitlab.com/ee/ci/yaml/includes.html#override-included-configuration-values
-################
+# The webship-js suites drive the site entirely through the browser. The first
+# feature (01-01-01-users-login) logs in as the Webmaster and provisions the
+# per-role testing users, so each before_script only has to build the site,
+# enable the module, provision the format and install Node + Playwright.
+################################################################################
 
 include:
-  ################
-  # DrupalCI includes:
-  # As long as you include this, any future includes added by the Drupal Association will be accessible to your pipelines automatically.
-  # View these include files at https://git.drupalcode.org/project/gitlab_templates/
-  ################
   - project: $_GITLAB_TEMPLATES_REPO
     ref: $_GITLAB_TEMPLATES_REF
     file:
-      - '/includes/include.drupalci.main.yml'
-      # EXPERIMENTAL: For Drupal 7, remove the above line and uncomment the below.
-      # - '/includes/include.drupalci.main-d7.yml'
-      - '/includes/include.drupalci.variables.yml'
-      - '/includes/include.drupalci.workflows.yml'
+      - "/includes/include.drupalci.main.yml"
+      - "/includes/include.drupalci.variables.yml"
+      - "/includes/include.drupalci.workflows.yml"
 
-################
-# Pipeline configuration variables
-#
-# These are the variables provided to the Run Pipeline form that a user may want to override.
-#
-# Docs at https://git.drupalcode.org/project/gitlab_templates/-/blob/1.0.x/includes/include.drupalci.variables.yml
-################
-# variables:
-#   SKIP_ESLINT: '1'
+variables:
+  COMPOSER_FLAGS: "--no-strict-lock"
+  COMPOSER_MEMORY_LIMIT: "-1"
+  # No yarn.lock is committed; Yarn 4 defaults to immutable installs and would
+  # refuse to create one. Allow lockfile creation in CI for every job.
+  YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
+
+# = Validate stage (all blocking) =
+composer-lint:
+  allow_failure: false
+cspell:
+  allow_failure: false
+eslint:
+  allow_failure: false
+phpcs:
+  allow_failure: false
+phpstan:
+  allow_failure: false
+phpunit:
+  allow_failure: false
+
+# = Reusable before_script fragments (via !reference) =
+.fragments:
+  web_db: &web_db
+    - mkdir -pv $CI_PROJECT_DIR/$_WEB_ROOT/sites/default/files
+    - mkdir -pv $CI_PROJECT_DIR/$_WEB_ROOT/sites/simpletest
+    - chmod -R 777 $CI_PROJECT_DIR/$_WEB_ROOT/sites/default/files
+    - chmod -R 777 $CI_PROJECT_DIR/$_WEB_ROOT/sites/simpletest
+    - rm -rf /var/www/html && ln -s $CI_PROJECT_DIR/$_WEB_ROOT /var/www/html
+    - chown -R www-data:www-data $CI_PROJECT_DIR
+    - service apache2 start
+    - export SIMPLETEST_DB=mysql://$MYSQL_USER:$MYSQL_PASSWORD@database/$MYSQL_DATABASE
+  node_playwright: &node_playwright
+
+    - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    - apt-get install -y nodejs
+    - node --version && npm --version
+    - 'test -f .yarnrc.yml || echo "nodeLinker: node-modules" > .yarnrc.yml'
+    # Back up cucumber.js - webship-js's postinstall can clobber it under yarn 4.
+    - cp cucumber.js .cucumber.js.bak
+    - corepack enable
+    - yarn install
+    - cp .cucumber.js.bak cucumber.js && rm .cucumber.js.bak
+    - ./node_modules/.bin/playwright install --with-deps chromium
+
+# = webship-js BDD - Drupal Core (Standard profile) =
+webship-js-drupal-core-test:
+  extends: .testing-job-base
+  needs: [composer]
+  # Override the parent's services - we only need the database. Playwright
+  # bundles its own Chromium, so Selenium and chromedriver are not needed.
+  services:
+    - name: $_CONFIG_DOCKERHUB_ROOT/$_TARGET_DB_TYPE-$_TARGET_DB_VERSION:$_TARGET_DB_IMAGE_TAG
+      alias: database
+  variables:
+    DRUPAL_ADMIN_USERNAME: "webmaster"
+    DRUPAL_ADMIN_PASSWORD: "dD.123123ddd"
+    DRUPAL_TEST_BASE_URL: "http://localhost"
+    LAUNCH_URL: "http://localhost"
+    FORCE_COLOR: "1"
+  artifacts:
+    when: always
+    paths:
+      - tests/reports/
+      - tests/screenshots/
+      - tests/videos/
+    expire_in: 7 days
+    reports:
+      junit: tests/reports/junit.xml
+  before_script:
+    - !reference [.fragments, web_db]
+    - $CI_PROJECT_DIR/vendor/bin/drush --root=$CI_PROJECT_DIR/$_WEB_ROOT site:install standard
+        --db-url=$SIMPLETEST_DB --account-name=webmaster --account-pass=dD.123123ddd
+        --site-name="CKEditor Anchor Link Test" -y
+    # Enable the module and editor stack, then apply the test recipe which
+    # creates the "Anchor Test" CKEditor 5 format with the Anchor button. The
+    # recipe's own install list also enables anchor_link, but we enable it
+    # explicitly first so a recipe failure is easy to diagnose.
+    - $CI_PROJECT_DIR/vendor/bin/drush --root=$CI_PROJECT_DIR/$_WEB_ROOT en -y
+        ckeditor5 editor filter anchor_link
+    - $CI_PROJECT_DIR/vendor/bin/drush --root=$CI_PROJECT_DIR/$_WEB_ROOT recipe
+        $CI_PROJECT_DIR/tests/recipes/anchor_link_test -y
+    - $CI_PROJECT_DIR/vendor/bin/drush --root=$CI_PROJECT_DIR/$_WEB_ROOT cache:rebuild
+    - !reference [.fragments, node_playwright]
+  script:
+    # cucumber.js loads only `tests/features/drupal/**`. Disable webship-js's
+    # auto HTML hook (it cannot await PDF generation from `process.on('exit')`)
+    # and run `generate-reports` explicitly after cucumber-js so both HTML and
+    # PDF land next to the JSON in `tests/reports/`.
+    - WEBSHIP_REPORT_DISABLE=1 ./node_modules/.bin/cucumber-js --config cucumber.js --tags "not @wip"
+    - node ./node_modules/webship-js/bin/generate-reports.js
+        --json tests/reports/cucumber_report.json
+        --out  tests/reports/cucumber_report.html
+        --format all
+        --pdf-out tests/reports/cucumber_report.pdf
+  allow_failure: false
+
+# = webship-js BDD - Drupal CMS distribution =
+# Builds a fresh drupal/cms project (separate from the drupalci core build),
+# adds the module via a Composer path repository, installs with the
+# drupal_cms_installer profile, renames uid 1 to webmaster, adds the Anchor
+# button to Drupal CMS's content_format, and runs the Drupal-CMS feature set.
+webship-js-drupal-cms-test:
+  extends: .testing-job-base
+  needs: []
+  services:
+    - name: $_CONFIG_DOCKERHUB_ROOT/$_TARGET_DB_TYPE-$_TARGET_DB_VERSION:$_TARGET_DB_IMAGE_TAG
+      alias: database
+  variables:
+    DRUPAL_ADMIN_USERNAME: "webmaster"
+    DRUPAL_ADMIN_PASSWORD: "dD.123123ddd"
+    DRUPAL_TEST_BASE_URL: "http://localhost"
+    LAUNCH_URL: "http://localhost"
+    FORCE_COLOR: "1"
+    _CMS_BUILD_DIR: "/tmp/cms-build"
+  artifacts:
+    when: always
+    paths:
+      - tests/reports/
+      - tests/screenshots/
+      - tests/videos/
+    expire_in: 7 days
+    reports:
+      junit: tests/reports/junit.xml
+  before_script:
+    # Composer 2.10 blocks installing advisory-flagged packages by default;
+    # drupal/cms's locked guzzlehttp/psr7 2.8.x trips it, so disable the block.
+    # (Harmless no-op on older Composer that lacks the policy key.)
+    - composer config --global policy.advisories.block false || true
+    # = Build a fresh Drupal CMS project (does not collide with drupalci) =
+    - composer create-project drupal/cms $_CMS_BUILD_DIR --no-interaction --no-progress
+    # = Add the local anchor_link module as a `path` repository + require it =
+    - cd $_CMS_BUILD_DIR
+    - composer config minimum-stability dev
+    - composer config prefer-stable true
+    - composer config repositories.anchor_link '{"type":"path","url":"'"$CI_PROJECT_DIR"'","options":{"symlink":true}}'
+    - composer require 'drupal/anchor_link:3.0.x-dev@dev' --no-interaction --no-progress
+    # = Web server =
+    - mkdir -pv $_CMS_BUILD_DIR/web/sites/default/files
+    - mkdir -pv $_CMS_BUILD_DIR/web/sites/simpletest
+    - chmod -R 777 $_CMS_BUILD_DIR/web/sites/default/files
+    - chmod -R 777 $_CMS_BUILD_DIR/web/sites/simpletest
+    - rm -rf /var/www/html && ln -s $_CMS_BUILD_DIR/web /var/www/html
+    - chown -R www-data:www-data $_CMS_BUILD_DIR
+    - service apache2 start
+    - export SIMPLETEST_DB=mysql://$MYSQL_USER:$MYSQL_PASSWORD@database/$MYSQL_DATABASE
+    # = Drupal CMS site install =
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web site:install drupal_cms_installer
+        --db-url=$SIMPLETEST_DB --site-name="CKEditor Anchor Link CMS Test" -y
+    # = Rename uid 1 to webmaster and enable the module + editor stack =
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web php:eval
+        '$u=\Drupal\user\Entity\User::load(1);$u->setUsername("webmaster")->setPassword("dD.123123ddd")->save();'
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web en -y ckeditor5 editor filter anchor_link
+    # Drupal CMS ships autosave_form, which keeps a background autosave
+    # connection open on the node form (so it never settles) and offers a
+    # "restore draft" prompt on re-open; the suite does not need it.
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web pmu -y autosave_form || true
+    # = Add the Anchor button to Drupal CMS's content_format (its content field
+    #   is locked to that format) and allow the anchor id/name/class attributes =
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web php:eval
+        '$f="content_format";$e=\Drupal::entityTypeManager()->getStorage("editor")->load($f);$s=$e->getSettings();if(!in_array("anchor",$s["toolbar"]["items"],TRUE)){$p=array_search("link",$s["toolbar"]["items"],TRUE);array_splice($s["toolbar"]["items"],$p===FALSE?0:$p+1,0,"anchor");$e->setSettings($s);$e->save();}$m=\Drupal::entityTypeManager()->getStorage("filter_format")->load($f);$c=$m->filters("filter_html")->getConfiguration();$c["settings"]["allowed_html"]=str_replace("<a ","<a id name class ",$c["settings"]["allowed_html"]);$m->setFilterConfig("filter_html",$c);$m->save();'
+    # Disable CSS/JS aggregation: avoids the one-off aggregate-compile delay on
+    # the first browser load of the heavy Gin + CKEditor 5 page form.
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web cset system.performance css.preprocess 0 -y
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web cset system.performance js.preprocess 0 -y
+    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web cache:rebuild
+    # Warm the admin + editor pages: the first authenticated load compiles the
+    # Gin admin theme + CKEditor 5 assets, which can exceed the browser suite's
+    # per-step timeout. Pre-compile them here.
+    - ULI=$($_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web user:login --uri=$LAUNCH_URL 2>/dev/null | tail -n1)
+    - curl -s -c /tmp/cms-cookies -b /tmp/cms-cookies -L "$ULI" -o /dev/null || true
+    - for p in /admin/config/content/formats /admin/config/content/formats/manage/content_format /node/add/page; do curl -s -b /tmp/cms-cookies -L "$LAUNCH_URL$p" -o /dev/null || true; done
+    # node_playwright runs `cp cucumber.js ...` from the project dir; the steps
+    # above left the shell in $_CMS_BUILD_DIR, so return to the checkout first.
+    - cd "$CI_PROJECT_DIR"
+    - !reference [.fragments, node_playwright]
+  script:
+    - WEBSHIP_REPORT_DISABLE=1 ./node_modules/.bin/cucumber-js --config cucumber.drupalcms.js --tags "not @wip"
+    - node ./node_modules/webship-js/bin/generate-reports.js
+        --json tests/reports/drupalcms/cucumber_report.json
+        --out  tests/reports/drupalcms/cucumber_report.html
+        --format all
+        --pdf-out tests/reports/drupalcms/cucumber_report.pdf
+  allow_failure: false

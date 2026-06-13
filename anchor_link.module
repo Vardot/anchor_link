@@ -4,9 +4,9 @@
  * @file
  * Contains anchor_link.module.
  */
+
 use Drupal\Core\Hook\Attribute\LegacyHook;
 use Drupal\anchor_link\Hook\AnchorLinkHooks;
-use Drupal\ckeditor5\Plugin\CKEditor5PluginDefinition;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -21,7 +21,6 @@ function anchor_link_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_ckeditor5_plugin_info_alter().
  */
 #[LegacyHook]
-function anchor_link_ckeditor5_plugin_info_alter(array &$plugin_definitions): void
-{
-    \Drupal::service(AnchorLinkHooks::class)->ckeditor5PluginInfoAlter($plugin_definitions);
+function anchor_link_ckeditor5_plugin_info_alter(array &$plugin_definitions): void {
+  \Drupal::service(AnchorLinkHooks::class)->ckeditor5PluginInfoAlter($plugin_definitions);
 }
