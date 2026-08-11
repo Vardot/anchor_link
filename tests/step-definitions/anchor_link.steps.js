@@ -1,28 +1,12 @@
 'use strict';
 
-/**
- * @file
- * Custom step definitions for the CKEditor Anchor Link test suite.
- *
- * Mirrors the sibling Webship modules (admin_audit_trail / webshare / webpage):
- * every step drives the site through the browser only - no Drush, no shell. The
- * module integrates an "Anchor" button into CKEditor 5; the scenarios open the
- * node form with the recipe-provisioned "Anchor Test" text format, drive the
- * Anchor balloon to insert `<a class="ck-anchor" id="…">`, save the node and
- * assert the anchor survives filtering and renders - and that the front-end
- * stylesheet is attached only on pages that actually contain an anchor.
- *
- * Navigation and waiting reuse webship-js's own helpers - gotoUrl (friendly
- * navigation errors) and waitForPageLoad (smart-settle) - and failures are
- * wrapped with friendly().
- */
-
 const { Given, Then, When } = require('@cucumber/cucumber');
+
 const {
   friendly,
   gotoUrl,
   waitForPageLoad,
-} = require('webship-js/tests/step-definitions/webship');
+} = require('@vardot/varbase-e2e/tests/step-definitions/varbase-e2e');
 
 /**
  * Run a step body and rethrow any failure as a tester-friendly error.
@@ -44,35 +28,6 @@ async function waitForEditor(page) {
     return el && el.ckeditorInstance;
   }, { timeout: 20000, polling: 100 });
 }
-
-/* -------------------------------------------------------------------------
- * Authentication + provisioning (shared phrasing across Webship modules).
- * ---------------------------------------------------------------------- */
-
-/**
- * Log in as a named test user defined in cucumber.js worldParameters.users.
- *
- * Example #1: Given I am a logged in user with the "Webmaster" user
- * Example #2: Given I am a logged in user with the "Content editor" user
- */
-Given(/^I am a logged in user with( the)*( username)* "([^"]*)?"( user)?$/, async function (theCase, usernameCase, key, userCase) {
-  const users = this.parameters.users || {};
-  if (!(key in users)) {
-    throw new Error(`No user named "${key}" in cucumber.js worldParameters.users`);
-  }
-  const { username, password } = users[key];
-  if (!username || !password) {
-    throw new Error(`User "${key}" is missing username or password in worldParameters.users`);
-  }
-  await attempt(async () => {
-    await this.context.clearCookies();
-    await gotoUrl(this.page, `${this.parameters.launchUrl}/user/login`);
-    await this.page.locator('#edit-name').fill(username);
-    await this.page.locator('#edit-pass').fill(password);
-    await this.page.locator('input[value="Log in"]').click();
-    await waitForPageLoad(this.page, this.minWaitTime && this.minWaitTime.page);
-  }, `Could not log in as "${key}"`);
-});
 
 /**
  * Provision every non-admin user from worldParameters.users via
@@ -102,10 +57,6 @@ Given(/^(?:I |we )?add( the)? testing users$/, async function (theCase) {
     }
   }, 'Could not provision the testing users');
 });
-
-/* -------------------------------------------------------------------------
- * Editor driving (Anchor Link specific).
- * ---------------------------------------------------------------------- */
 
 /**
  * Open the article-add form and switch the body field to the named text format,
@@ -250,11 +201,7 @@ Then(/^the page should contain an anchor with id "([^"]*)"$/, async function (id
   }, `Expected the page to contain an anchor with id "${id}"`);
 });
 
-/* -------------------------------------------------------------------------
- * Generic named-selector assertions (shared phrasing across Webship modules).
- * ---------------------------------------------------------------------- */
-
-/** Resolve a webship-js named selector from the world registry. */
+/** Resolve a varbase-e2e named selector from the world registry. */
 function resolveName(world, name) {
   const css = world.__selectorsCss || {};
   const key = name.trim();

@@ -5,15 +5,15 @@
 #   1. The standard Drupal CI validation jobs (composer, cspell, eslint, phpcs,
 #      phpstan, phpunit) provided by the drupalci templates. Every job is
 #      blocking (allow_failure: false).
-#   2. Two webship-js BDD browser-test jobs (Playwright + Cucumber-js):
-#        - webship-js-drupal-core-test → Drupal Core (Standard profile); the
+#   2. Two varbase-e2e BDD browser-test jobs (Playwright + Cucumber-js):
+#        - varbase-e2e-drupal-core-test → Drupal Core (Standard profile); the
 #          tests/features/drupal/** suite against a freshly installed site with
 #          the module enabled and the Anchor Test recipe applied.
-#        - webship-js-drupal-cms-test  → Drupal CMS distribution; the
+#        - varbase-e2e-drupal-cms-test  → Drupal CMS distribution; the
 #          tests/features/drupalcms/** suite against a fresh drupal/cms build
 #          with the Anchor button added to Drupal CMS's content_format.
 #
-# The webship-js suites drive the site entirely through the browser. The first
+# The varbase-e2e suites drive the site entirely through the browser. The first
 # feature (01-01-01-users-login) logs in as the Webmaster and provisions the
 # per-role testing users, so each before_script only has to build the site,
 # enable the module, provision the format and install Node + Playwright.
@@ -65,15 +65,15 @@ phpunit:
     - apt-get install -y nodejs
     - node --version && npm --version
     - 'test -f .yarnrc.yml || echo "nodeLinker: node-modules" > .yarnrc.yml'
-    # Back up cucumber.js - webship-js's postinstall can clobber it under yarn 4.
+    # Back up cucumber.js - varbase-e2e's postinstall can clobber it under yarn 4.
     - cp cucumber.js .cucumber.js.bak
     - corepack enable
     - yarn install
     - cp .cucumber.js.bak cucumber.js && rm .cucumber.js.bak
     - ./node_modules/.bin/playwright install --with-deps chromium
 
-# = webship-js BDD - Drupal Core (Standard profile) =
-webship-js-drupal-core-test:
+# = varbase-e2e BDD - Drupal Core (Standard profile) =
+varbase-e2e-drupal-core-test:
   extends: .testing-job-base
   needs: [composer]
   # Override the parent's services - we only need the database. Playwright
@@ -112,24 +112,24 @@ webship-js-drupal-core-test:
     - $CI_PROJECT_DIR/vendor/bin/drush --root=$CI_PROJECT_DIR/$_WEB_ROOT cache:rebuild
     - !reference [.fragments, node_playwright]
   script:
-    # cucumber.js loads only `tests/features/drupal/**`. Disable webship-js's
+    # cucumber.js loads only `tests/features/drupal/**`. Disable varbase-e2e's
     # auto HTML hook (it cannot await PDF generation from `process.on('exit')`)
     # and run `generate-reports` explicitly after cucumber-js so both HTML and
     # PDF land next to the JSON in `tests/reports/`.
-    - WEBSHIP_REPORT_DISABLE=1 ./node_modules/.bin/cucumber-js --config cucumber.js --tags "not @wip"
-    - node ./node_modules/webship-js/bin/generate-reports.js
+    - VARBASE_E2E_REPORT_DISABLE=1 ./node_modules/.bin/cucumber-js --config cucumber.js --tags "not @wip"
+    - node ./node_modules/@vardot/varbase-e2e/bin/generate-reports.js
         --json tests/reports/cucumber_report.json
         --out  tests/reports/cucumber_report.html
         --format all
         --pdf-out tests/reports/cucumber_report.pdf
   allow_failure: false
 
-# = webship-js BDD - Drupal CMS distribution =
+# = varbase-e2e BDD - Drupal CMS distribution =
 # Builds a fresh drupal/cms project (separate from the drupalci core build),
 # adds the module via a Composer path repository, installs with the
 # drupal_cms_installer profile, renames uid 1 to webmaster, adds the Anchor
 # button to Drupal CMS's content_format, and runs the Drupal-CMS feature set.
-webship-js-drupal-cms-test:
+varbase-e2e-drupal-cms-test:
   extends: .testing-job-base
   needs: []
   services:
@@ -204,8 +204,8 @@ webship-js-drupal-cms-test:
     - cd "$CI_PROJECT_DIR"
     - !reference [.fragments, node_playwright]
   script:
-    - WEBSHIP_REPORT_DISABLE=1 ./node_modules/.bin/cucumber-js --config cucumber.drupalcms.js --tags "not @wip"
-    - node ./node_modules/webship-js/bin/generate-reports.js
+    - VARBASE_E2E_REPORT_DISABLE=1 ./node_modules/.bin/cucumber-js --config cucumber.drupalcms.js --tags "not @wip"
+    - node ./node_modules/@vardot/varbase-e2e/bin/generate-reports.js
         --json tests/reports/drupalcms/cucumber_report.json
         --out  tests/reports/drupalcms/cucumber_report.html
         --format all

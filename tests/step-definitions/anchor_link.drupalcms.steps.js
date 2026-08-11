@@ -8,7 +8,7 @@
  * "Utility page" type) is locked to Drupal CMS's own `content_format`, so there
  * is no format selector to switch and no `article` type. These steps drive the
  * `page` node form, whose CKEditor 5 instance uses `content_format` - the
- * webship-js CI job adds the Anchor button to that format in its before_script.
+ * varbase-e2e CI job adds the Anchor button to that format in its before_script.
  *
  * The generic editor / anchor assertions (CKEditor toolbar, insert an anchor,
  * editor data, anchor in output) are shared with the Drupal Core suite in
@@ -20,7 +20,7 @@ const {
   friendly,
   gotoUrl,
   waitForPageLoad,
-} = require('webship-js/tests/step-definitions/webship');
+} = require('@vardot/varbase-e2e/tests/step-definitions/varbase-e2e');
 
 async function attempt(body, message) {
   try {
@@ -45,7 +45,7 @@ async function waitForEditor(page) {
  */
 When(/^(?:I |we )?open a new Drupal CMS page$/, async function () {
   await attempt(async () => {
-    // Navigate with webship-js's gotoUrl (friendly navigation, settles on
+    // Navigate with varbase-e2e's gotoUrl (friendly navigation, settles on
     // domcontentloaded) and then wait for the CKEditor 5 instance to attach.
     // We deliberately do not smart-settle on network idle here: the Drupal CMS
     // page form keeps a background autosave connection open, so "network idle"

@@ -1,7 +1,7 @@
-# CKEditor Anchor Link — webship-js test suite
+# CKEditor Anchor Link — varbase-e2e test suite
 
 Browser-driven BDD tests (Playwright + Cucumber-js, via
-[webship-js](https://www.npmjs.com/package/webship-js)). Every scenario drives
+[varbase-e2e](https://www.npmjs.com/package/varbase-e2e)). Every scenario drives
 the site through the browser only.
 
 ## Layout
