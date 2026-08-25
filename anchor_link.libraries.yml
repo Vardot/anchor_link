@@ -1,6 +1,6 @@
 cke5_anchor_link:
   js:
-    /libraries/ckeditor5-anchor-drupal/build/anchor-drupal.js: { preprocess: false, minified: true }
+    /libraries/ckeditor5-anchor-drupal/build/anchor-drupal.js: { }
   dependencies:
     - core/ckeditor5
 admin.cke5_anchor_link:
