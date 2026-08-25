@@ -24,6 +24,7 @@ anchor_link_ckeditor5_anchor:
     elements:
       - <a>
       - <a id="">
+      - <a name="">
       - <a target="">
       - <a rel="">
       - <a class="ck-anchor">
