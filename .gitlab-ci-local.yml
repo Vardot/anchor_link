@@ -7,16 +7,13 @@
 # way so the whole thing can be exercised locally before pushing:
 #
 #   validate : cspell + eslint/yaml linters (Node 20)
-#   test     : two varbase-e2e BDD suites against freshly built sites (MariaDB
+#   test     : the varbase-e2e BDD suite against a freshly built site (MariaDB
 #              service + `drush runserver`, the module added via a Composer path
-#              repository):
-#                - functional-tests-drupal-core → Drupal Core + Anchor Test recipe
-#                - functional-tests-drupal-cms  → Drupal CMS + content_format
+#              repository): Drupal Core + Anchor Test recipe
 #
 # Usage:
 #   gitlab-ci-local --file .gitlab-ci-local.yml                              # all jobs
-#   gitlab-ci-local --file .gitlab-ci-local.yml functional-tests-drupal-core  # Core suite
-#   gitlab-ci-local --file .gitlab-ci-local.yml functional-tests-drupal-cms   # CMS suite
+#   gitlab-ci-local --file .gitlab-ci-local.yml functional-tests             # browser suite
 #   gitlab-ci-local --file .gitlab-ci-local.yml cspell                       # one linter
 
 stages:
@@ -59,7 +56,7 @@ eslint:
 # pointing at the checked-out repo, so the exact working-tree code is what gets
 # exercised. The Anchor Test CKEditor 5 format is provisioned by applying the
 # tests/recipes/anchor_link_test recipe.
-functional-tests-drupal-core:
+functional-tests:
   stage: test
   image: node:20-bookworm
   # MariaDB service (Drupal 11 needs SQLite >= 3.45, newer than Debian ships,
@@ -117,90 +114,6 @@ functional-tests-drupal-core:
     - cd "$CI_PROJECT_DIR"
     - ./node_modules/.bin/cucumber-js --config cucumber.js --tags "not @wip"
     - node ./node_modules/@vardot/varbase-e2e/bin/generate-reports.js --json tests/reports/cucumber_report.json --out tests/reports/cucumber_report.html || true
-  artifacts:
-    when: always
-    paths:
-      - tests/reports/
-      - tests/screenshots/
-      - tests/videos/
-  allow_failure: false
-
-# Self-contained varbase-e2e browser job (Drupal CMS distribution). Builds a
-# fresh `drupal/cms` project, adds the module via a Composer path repository,
-# installs with the `drupal_cms_installer` profile, renames uid 1 to webmaster,
-# adds the Anchor button to Drupal CMS's `content_format` (its content field is
-# locked to that format), and runs the Drupal-CMS feature set.
-functional-tests-drupal-cms:
-  stage: test
-  image: node:20-bookworm
-  services:
-    - name: mariadb:10.11
-      alias: database
-  variables:
-    MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
-    MARIADB_DATABASE: "drupal"
-    LAUNCH_URL: "http://127.0.0.1:8888"
-    BROWSER: "chromium"
-    VARBASE_E2E_REPORT_DISABLE: "1"
-    SITE: "/app-cms"
-    DB_URL: "mysql://root@database:3306/drupal"
-    PHP_CLI_SERVER_WORKERS: "8"
-  before_script:
-    # --- PHP 8.3 (Sury repo) -----------------------------------------------
-    - apt-get update -qq
-    - apt-get install -y -qq lsb-release ca-certificates curl unzip git apt-transport-https >/dev/null
-    - curl -sSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/sury-php.gpg
-    - echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/sury-php.list
-    - apt-get update -qq
-    - apt-get install -y -qq php8.3-cli php8.3-mysql php8.3-gd php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip default-mysql-client >/dev/null
-    - php -v | head -n1
-    - for i in $(seq 1 60); do mysqladmin --host=database --user=root ping >/dev/null 2>&1 && break; sleep 2; done
-    - mysqladmin --host=database --user=root ping
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    # --- Node test-runner deps ---------------------------------------------
-    - cd "$CI_PROJECT_DIR"
-    - corepack enable && yarn install
-    - ./node_modules/.bin/playwright install --with-deps chromium
-    # --- Build a fresh Drupal CMS project with the module via a path repo ---
-    # Composer 2.10 blocks installing advisory-flagged packages by default;
-    # drupal/cms's locked guzzlehttp/psr7 2.8.x trips it, so disable the block.
-    - composer config --global policy.advisories.block false
-    - composer create-project drupal/cms "$SITE" --no-interaction --no-progress
-    - cd "$SITE"
-    - composer config minimum-stability dev
-    - composer config prefer-stable true
-    - composer config repositories.anchor_link '{"type":"path","url":"'"$CI_PROJECT_DIR"'","options":{"symlink":true}}'
-    - composer require 'drupal/anchor_link:3.0.x-dev@dev' --no-interaction --no-progress
-    # --- Install Drupal CMS, rename uid 1, enable + provision --------------
-    - vendor/bin/drush --root="$SITE/web" site:install drupal_cms_installer --db-url="$DB_URL" --site-name="CKEditor Anchor Link CMS Test" -y
-    - vendor/bin/drush --root="$SITE/web" php:eval '$u=\Drupal\user\Entity\User::load(1);$u->setUsername("webmaster")->setPassword("dD.123123ddd")->save();'
-    - vendor/bin/drush --root="$SITE/web" en -y ckeditor5 editor filter anchor_link
-    # Drupal CMS ships autosave_form, which keeps a background autosave
-    # connection open on the node form (so it never settles) and offers a
-    # "restore draft" prompt on re-open; the suite does not need it.
-    - vendor/bin/drush --root="$SITE/web" pmu -y autosave_form || true
-    # Add the Anchor button to Drupal CMS's content_format + allow id/name/class.
-    - vendor/bin/drush --root="$SITE/web" php:eval '$f="content_format";$e=\Drupal::entityTypeManager()->getStorage("editor")->load($f);$s=$e->getSettings();if(!in_array("anchor",$s["toolbar"]["items"],TRUE)){$p=array_search("link",$s["toolbar"]["items"],TRUE);array_splice($s["toolbar"]["items"],$p===FALSE?0:$p+1,0,"anchor");$e->setSettings($s);$e->save();}$m=\Drupal::entityTypeManager()->getStorage("filter_format")->load($f);$c=$m->filters("filter_html")->getConfiguration();$c["settings"]["allowed_html"]=str_replace("<a ","<a id name class ",$c["settings"]["allowed_html"]);$m->setFilterConfig("filter_html",$c);$m->save();'
-    # Disable CSS/JS aggregation: avoids the one-off aggregate-compile delay on
-    # the first browser load of the heavy Gin + CKEditor 5 page form.
-    - vendor/bin/drush --root="$SITE/web" cset system.performance css.preprocess 0 -y
-    - vendor/bin/drush --root="$SITE/web" cset system.performance js.preprocess 0 -y
-    - vendor/bin/drush --root="$SITE/web" cr
-    # --- Serve the site in the background ----------------------------------
-    - chmod -R 777 web/sites/default/files
-    - vendor/bin/drush --root="$SITE/web" runserver 127.0.0.1:8888 >/tmp/runserver-cms.log 2>&1 &
-    - for i in $(seq 1 30); do curl -fsS -o /dev/null "$LAUNCH_URL/user/login" && break; sleep 1; done
-    - curl -fsS -o /dev/null "$LAUNCH_URL/user/login" && echo "Drupal CMS site is up"
-    # Warm the admin + editor pages: the first authenticated load compiles the
-    # Gin admin theme + CKEditor 5 assets, which on a single-worker runserver can
-    # exceed the browser suite's per-step timeout. Pre-compile them here.
-    - ULI=$(vendor/bin/drush --root="$SITE/web" user:login --uri="$LAUNCH_URL" 2>/dev/null | tail -n1)
-    - curl -s -c /tmp/cms-cookies -b /tmp/cms-cookies -L "$ULI" -o /dev/null || true
-    - for p in /admin/config/content/formats /admin/config/content/formats/manage/content_format /node/add/page; do curl -s -b /tmp/cms-cookies -L "$LAUNCH_URL$p" -o /dev/null || true; done
-  script:
-    - cd "$CI_PROJECT_DIR"
-    - ./node_modules/.bin/cucumber-js --config cucumber.drupalcms.js --tags "not @wip"
-    - node ./node_modules/@vardot/varbase-e2e/bin/generate-reports.js --json tests/reports/drupalcms/cucumber_report.json --out tests/reports/drupalcms/cucumber_report.html || true
   artifacts:
     when: always
     paths:

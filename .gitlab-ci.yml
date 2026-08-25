@@ -5,18 +5,14 @@
 #   1. The standard Drupal CI validation jobs (composer, cspell, eslint, phpcs,
 #      phpstan, phpunit) provided by the drupalci templates. Every job is
 #      blocking (allow_failure: false).
-#   2. Two functional-tests browser-test jobs, run by @vardot/varbase-e2e
-#      (Playwright + Cucumber-js):
-#        - functional-tests-drupal-core → Drupal Core (Standard profile); the
-#          tests/features/drupal/** suite against a freshly installed site with
-#          the module enabled and the Anchor Test recipe applied.
-#        - functional-tests-drupal-cms  → Drupal CMS distribution; the
-#          tests/features/drupalcms/** suite against a fresh drupal/cms build
-#          with the Anchor button added to Drupal CMS's content_format.
+#   2. A functional-tests browser-test job, run by @vardot/varbase-e2e
+#      (Playwright + Cucumber-js): Drupal Core (Standard profile); the
+#      tests/features/drupal/** suite against a freshly installed site with
+#      the module enabled and the Anchor Test recipe applied.
 #
-# The varbase-e2e suites drive the site entirely through the browser. The first
+# The varbase-e2e suite drives the site entirely through the browser. The first
 # feature (01-01-01-users-login) logs in as the Webmaster and provisions the
-# per-role testing users, so each before_script only has to build the site,
+# per-role testing users, so the before_script only has to build the site,
 # enable the module, provision the format and install Node + Playwright.
 ################################################################################
 
@@ -74,7 +70,7 @@ phpunit:
     - ./node_modules/.bin/playwright install --with-deps chromium
 
 # = Functional tests - Drupal Core (Standard profile) =
-functional-tests-drupal-core:
+functional-tests:
   extends: .testing-job-base
   needs: [composer]
   # Override the parent's services - we only need the database. Playwright
@@ -123,92 +119,4 @@ functional-tests-drupal-core:
         --out  tests/reports/cucumber_report.html
         --format all
         --pdf-out tests/reports/cucumber_report.pdf
-  allow_failure: false
-
-# = Functional tests - Drupal CMS distribution =
-# Builds a fresh drupal/cms project (separate from the drupalci core build),
-# adds the module via a Composer path repository, installs with the
-# drupal_cms_installer profile, renames uid 1 to webmaster, adds the Anchor
-# button to Drupal CMS's content_format, and runs the Drupal-CMS feature set.
-functional-tests-drupal-cms:
-  extends: .testing-job-base
-  needs: []
-  services:
-    - name: $_CONFIG_DOCKERHUB_ROOT/$_TARGET_DB_TYPE-$_TARGET_DB_VERSION:$_TARGET_DB_IMAGE_TAG
-      alias: database
-  variables:
-    DRUPAL_ADMIN_USERNAME: "webmaster"
-    DRUPAL_ADMIN_PASSWORD: "dD.123123ddd"
-    DRUPAL_TEST_BASE_URL: "http://localhost"
-    LAUNCH_URL: "http://localhost"
-    FORCE_COLOR: "1"
-    _CMS_BUILD_DIR: "/tmp/cms-build"
-  artifacts:
-    when: always
-    paths:
-      - tests/reports/
-      - tests/screenshots/
-      - tests/videos/
-    expire_in: 7 days
-    reports:
-      junit: tests/reports/junit.xml
-  before_script:
-    # Composer 2.10 blocks installing advisory-flagged packages by default;
-    # drupal/cms's locked guzzlehttp/psr7 2.8.x trips it, so disable the block.
-    # (Harmless no-op on older Composer that lacks the policy key.)
-    - composer config --global policy.advisories.block false || true
-    # = Build a fresh Drupal CMS project (does not collide with drupalci) =
-    - composer create-project drupal/cms $_CMS_BUILD_DIR --no-interaction --no-progress
-    # = Add the local anchor_link module as a `path` repository + require it =
-    - cd $_CMS_BUILD_DIR
-    - composer config minimum-stability dev
-    - composer config prefer-stable true
-    - composer config repositories.anchor_link '{"type":"path","url":"'"$CI_PROJECT_DIR"'","options":{"symlink":true}}'
-    - composer require 'drupal/anchor_link:3.0.x-dev@dev' --no-interaction --no-progress
-    # = Web server =
-    - mkdir -pv $_CMS_BUILD_DIR/web/sites/default/files
-    - mkdir -pv $_CMS_BUILD_DIR/web/sites/simpletest
-    - chmod -R 777 $_CMS_BUILD_DIR/web/sites/default/files
-    - chmod -R 777 $_CMS_BUILD_DIR/web/sites/simpletest
-    - rm -rf /var/www/html && ln -s $_CMS_BUILD_DIR/web /var/www/html
-    - chown -R www-data:www-data $_CMS_BUILD_DIR
-    - service apache2 start
-    - export SIMPLETEST_DB=mysql://$MYSQL_USER:$MYSQL_PASSWORD@database/$MYSQL_DATABASE
-    # = Drupal CMS site install =
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web site:install drupal_cms_installer
-        --db-url=$SIMPLETEST_DB --site-name="CKEditor Anchor Link CMS Test" -y
-    # = Rename uid 1 to webmaster and enable the module + editor stack =
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web php:eval
-        '$u=\Drupal\user\Entity\User::load(1);$u->setUsername("webmaster")->setPassword("dD.123123ddd")->save();'
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web en -y ckeditor5 editor filter anchor_link
-    # Drupal CMS ships autosave_form, which keeps a background autosave
-    # connection open on the node form (so it never settles) and offers a
-    # "restore draft" prompt on re-open; the suite does not need it.
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web pmu -y autosave_form || true
-    # = Add the Anchor button to Drupal CMS's content_format (its content field
-    #   is locked to that format) and allow the anchor id/name/class attributes =
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web php:eval
-        '$f="content_format";$e=\Drupal::entityTypeManager()->getStorage("editor")->load($f);$s=$e->getSettings();if(!in_array("anchor",$s["toolbar"]["items"],TRUE)){$p=array_search("link",$s["toolbar"]["items"],TRUE);array_splice($s["toolbar"]["items"],$p===FALSE?0:$p+1,0,"anchor");$e->setSettings($s);$e->save();}$m=\Drupal::entityTypeManager()->getStorage("filter_format")->load($f);$c=$m->filters("filter_html")->getConfiguration();$c["settings"]["allowed_html"]=str_replace("<a ","<a id name class ",$c["settings"]["allowed_html"]);$m->setFilterConfig("filter_html",$c);$m->save();'
-    # Disable CSS/JS aggregation: avoids the one-off aggregate-compile delay on
-    # the first browser load of the heavy Gin + CKEditor 5 page form.
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web cset system.performance css.preprocess 0 -y
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web cset system.performance js.preprocess 0 -y
-    - $_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web cache:rebuild
-    # Warm the admin + editor pages: the first authenticated load compiles the
-    # Gin admin theme + CKEditor 5 assets, which can exceed the browser suite's
-    # per-step timeout. Pre-compile them here.
-    - ULI=$($_CMS_BUILD_DIR/vendor/bin/drush --root=$_CMS_BUILD_DIR/web user:login --uri=$LAUNCH_URL 2>/dev/null | tail -n1)
-    - curl -s -c /tmp/cms-cookies -b /tmp/cms-cookies -L "$ULI" -o /dev/null || true
-    - for p in /admin/config/content/formats /admin/config/content/formats/manage/content_format /node/add/page; do curl -s -b /tmp/cms-cookies -L "$LAUNCH_URL$p" -o /dev/null || true; done
-    # node_playwright runs `cp cucumber.js ...` from the project dir; the steps
-    # above left the shell in $_CMS_BUILD_DIR, so return to the checkout first.
-    - cd "$CI_PROJECT_DIR"
-    - !reference [.fragments, node_playwright]
-  script:
-    - VARBASE_E2E_REPORT_DISABLE=1 ./node_modules/.bin/cucumber-js --config cucumber.drupalcms.js --tags "not @wip"
-    - node ./node_modules/@vardot/varbase-e2e/bin/generate-reports.js
-        --json tests/reports/drupalcms/cucumber_report.json
-        --out  tests/reports/drupalcms/cucumber_report.html
-        --format all
-        --pdf-out tests/reports/drupalcms/cucumber_report.pdf
   allow_failure: false
