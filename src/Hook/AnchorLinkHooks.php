@@ -45,7 +45,9 @@ class AnchorLinkHooks {
     ];
     foreach ($plugins_to_override as $plugin_id) {
       if (!isset($plugin_definitions[$plugin_id])) {
-        return;
+        // Skip this one and carry on, so a missing plugin does not stop the
+        // others from being altered.
+        continue;
       }
       $plugin_definition = $plugin_definitions[$plugin_id]->toArray();
       // Make plugin-specific alterations. Disallow the General HTML Support

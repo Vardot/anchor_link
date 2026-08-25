@@ -10,13 +10,13 @@
 #   test     : two varbase-e2e BDD suites against freshly built sites (MariaDB
 #              service + `drush runserver`, the module added via a Composer path
 #              repository):
-#                - varbase-e2e-drupal-core-test → Drupal Core + Anchor Test recipe
-#                - varbase-e2e-drupal-cms-test  → Drupal CMS + content_format
+#                - functional-tests-drupal-core → Drupal Core + Anchor Test recipe
+#                - functional-tests-drupal-cms  → Drupal CMS + content_format
 #
 # Usage:
 #   gitlab-ci-local --file .gitlab-ci-local.yml                              # all jobs
-#   gitlab-ci-local --file .gitlab-ci-local.yml varbase-e2e-drupal-core-test  # Core suite
-#   gitlab-ci-local --file .gitlab-ci-local.yml varbase-e2e-drupal-cms-test   # CMS suite
+#   gitlab-ci-local --file .gitlab-ci-local.yml functional-tests-drupal-core  # Core suite
+#   gitlab-ci-local --file .gitlab-ci-local.yml functional-tests-drupal-cms   # CMS suite
 #   gitlab-ci-local --file .gitlab-ci-local.yml cspell                       # one linter
 
 stages:
@@ -59,7 +59,7 @@ eslint:
 # pointing at the checked-out repo, so the exact working-tree code is what gets
 # exercised. The Anchor Test CKEditor 5 format is provisioned by applying the
 # tests/recipes/anchor_link_test recipe.
-varbase-e2e-drupal-core-test:
+functional-tests-drupal-core:
   stage: test
   image: node:20-bookworm
   # MariaDB service (Drupal 11 needs SQLite >= 3.45, newer than Debian ships,
@@ -130,7 +130,7 @@ varbase-e2e-drupal-core-test:
 # installs with the `drupal_cms_installer` profile, renames uid 1 to webmaster,
 # adds the Anchor button to Drupal CMS's `content_format` (its content field is
 # locked to that format), and runs the Drupal-CMS feature set.
-varbase-e2e-drupal-cms-test:
+functional-tests-drupal-cms:
   stage: test
   image: node:20-bookworm
   services:

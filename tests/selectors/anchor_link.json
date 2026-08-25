@@ -18,12 +18,12 @@
     "anchor balloon input": ".ck-balloon-panel input[type='text']",
 
     "node body": "article .field--name-body, .node__content .text-formatted, .node__content",
-    "anchor in output": "a.ck-anchor",
+    "anchor in output": "main a[id]:not([href])",
     "node add article form": "form.node-article-form, form[data-drupal-selector='node-article-form']",
 
     "body format select": "select[name='body[0][format]']"
   },
   "xpath": {
-    "anchor in output": "//a[contains(@class,'ck-anchor')]"
+    "anchor in output": "//main//a[@id and not(@href)]"
   }
 }

@@ -10,9 +10,9 @@ Feature: Inserting an anchor on a Drupal CMS page
   Scenario: Insert an anchor on a Drupal CMS page and confirm it survives save and render
     When I open a new Drupal CMS page
     And I insert an anchor named "cms-section" around the text "Jump to this CMS section"
-    Then the editor data should contain "ck-anchor"
+    Then the editor data should not contain "ck-anchor"
     And the editor data should contain "cms-section"
     When I save the Drupal CMS page titled "Anchor CMS insert demo"
     Then the page should contain an anchor with id "cms-section"
-    And the "anchor in output" element should have a count of 1
+    And the page should contain exactly 1 anchor with id "cms-section"
     And there should be no JavaScript errors

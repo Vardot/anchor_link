@@ -5,11 +5,12 @@
 #   1. The standard Drupal CI validation jobs (composer, cspell, eslint, phpcs,
 #      phpstan, phpunit) provided by the drupalci templates. Every job is
 #      blocking (allow_failure: false).
-#   2. Two varbase-e2e BDD browser-test jobs (Playwright + Cucumber-js):
-#        - varbase-e2e-drupal-core-test → Drupal Core (Standard profile); the
+#   2. Two functional-tests browser-test jobs, run by @vardot/varbase-e2e
+#      (Playwright + Cucumber-js):
+#        - functional-tests-drupal-core → Drupal Core (Standard profile); the
 #          tests/features/drupal/** suite against a freshly installed site with
 #          the module enabled and the Anchor Test recipe applied.
-#        - varbase-e2e-drupal-cms-test  → Drupal CMS distribution; the
+#        - functional-tests-drupal-cms  → Drupal CMS distribution; the
 #          tests/features/drupalcms/** suite against a fresh drupal/cms build
 #          with the Anchor button added to Drupal CMS's content_format.
 #
@@ -72,8 +73,8 @@ phpunit:
     - cp .cucumber.js.bak cucumber.js && rm .cucumber.js.bak
     - ./node_modules/.bin/playwright install --with-deps chromium
 
-# = varbase-e2e BDD - Drupal Core (Standard profile) =
-varbase-e2e-drupal-core-test:
+# = Functional tests - Drupal Core (Standard profile) =
+functional-tests-drupal-core:
   extends: .testing-job-base
   needs: [composer]
   # Override the parent's services - we only need the database. Playwright
@@ -124,12 +125,12 @@ varbase-e2e-drupal-core-test:
         --pdf-out tests/reports/cucumber_report.pdf
   allow_failure: false
 
-# = varbase-e2e BDD - Drupal CMS distribution =
+# = Functional tests - Drupal CMS distribution =
 # Builds a fresh drupal/cms project (separate from the drupalci core build),
 # adds the module via a Composer path repository, installs with the
 # drupal_cms_installer profile, renames uid 1 to webmaster, adds the Anchor
 # button to Drupal CMS's content_format, and runs the Drupal-CMS feature set.
-varbase-e2e-drupal-cms-test:
+functional-tests-drupal-cms:
   extends: .testing-job-base
   needs: []
   services:

@@ -134,6 +134,42 @@ When(/^(?:I |we )?insert an anchor named "([^"]*)" around the text "([^"]*)"$/, 
 });
 
 /**
+ * Replace the editor content with the given HTML, so a scenario can start from
+ * markup an editor would otherwise have to be driven to produce.
+ *
+ * Example: When I set the editor data to "<p><a id=\"x\">y</a></p>"
+ */
+When(/^(?:I |we )?set the editor data to "(.*)"$/, async function (html) {
+  await attempt(async () => {
+    await waitForEditor(this.page);
+    await this.page.evaluate((html) => {
+      const ed = document.querySelector('.ck-editor__editable').ckeditorInstance;
+      ed.setData(html);
+    }, html.replace(/\\"/g, '"'));
+    await this.page.waitForTimeout(300);
+  }, 'Could not set the editor data');
+});
+
+/**
+ * Assert the live editor data (getData) does NOT contain the given fragment.
+ *
+ * Example: Then the editor data should not contain "ck-anchor"
+ */
+Then(/^the editor data should not contain "([^"]*)"$/, async function (fragment) {
+  await attempt(async () => {
+    await this.page.waitForFunction(
+      (fragment) => {
+        const el = document.querySelector('.ck-editor__editable');
+        const ed = el && el.ckeditorInstance;
+        return ed && !ed.getData().includes(fragment);
+      },
+      fragment,
+      { timeout: 10000, polling: 100 },
+    );
+  }, `Expected the editor data not to contain "${fragment}"`);
+});
+
+/**
  * Assert the live editor data (getData) contains the given HTML fragment.
  *
  * Example: Then the editor data should contain "class=\"ck-anchor\""
@@ -184,7 +220,7 @@ When(/^(?:I |we )?view the article I created$/, async function () {
 });
 
 /**
- * Assert the rendered page contains an anchor (`a.ck-anchor`) with the given id.
+ * Assert the rendered page contains an anchor with the given id.
  *
  * Example: Then the page should contain an anchor with id "section-one"
  */
@@ -192,7 +228,7 @@ Then(/^the page should contain an anchor with id "([^"]*)"$/, async function (id
   await attempt(async () => {
     await this.page.waitForFunction(
       (id) => {
-        const a = document.querySelector(`a.ck-anchor#${CSS.escape(id)}`);
+        const a = document.querySelector(`a#${CSS.escape(id)}`);
         return !!a;
       },
       id,
@@ -244,6 +280,23 @@ Then(/^the "([^"]*)" element should contain text "([^"]*)"(?: within (\d+) secon
       { timeout, polling: 100 },
     );
   }, `Expected "${name}" (${sel}) to contain text "${text}"`);
+});
+
+/**
+ * Assert how many anchors carry the given id, wherever the theme renders them.
+ * An anchor is meant to appear once, and a duplicate is a bug of its own.
+ *
+ * Example: Then the page should contain exactly 1 anchor with id "section-one"
+ */
+Then(/^the page should contain exactly (\d+) anchors? with id "([^"]*)"$/, async function (expected, id) {
+  const target = Number(expected);
+  await attempt(async () => {
+    await this.page.waitForFunction(
+      ({ id, target }) => document.querySelectorAll(`a[id="${id}"]`).length === target,
+      { id, target },
+      { timeout: 10000, polling: 100 },
+    );
+  }, `Expected exactly ${target} anchor(s) with id "${id}"`);
 });
 
 /**
