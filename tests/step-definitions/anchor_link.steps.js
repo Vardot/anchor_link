@@ -88,22 +88,30 @@ When(/^(?:I |we )?open a new article using the "([^"]*)" text format$/, async fu
     await waitForEditor(this.page);
     const changed = await this.page.evaluate((format) => {
       const sel = document.querySelector('select[name="body[0][format]"]');
-      if (!sel) return false;
-      if (sel.value !== format) {
-        sel.value = format;
-        sel.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      return true;
-    }, format);
-    if (!changed) throw new Error('Body format selector not found.');
-    // The old editor detaches and the new one attaches asynchronously, so wait
-    // for an instance that actually carries the Anchor plugin instead of
-    // whichever editable happens to exist right now.
-    await this.page.waitForFunction(() => {
+      if (!sel) return 'no-selector';
+      if (sel.value === format) return 'already';
+      // Tag the instance being replaced, so the wait below can tell the new
+      // one from it.
       const el = document.querySelector('.ck-editor__editable');
-      const ed = el && el.ckeditorInstance;
-      return ed && ed.plugins.has('Anchor');
-    }, { timeout: 20000, polling: 100 });
+      if (el && el.ckeditorInstance) {
+        el.ckeditorInstance.__anchorLinkOutgoing = true;
+      }
+      sel.value = format;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      return 'switched';
+    }, format);
+    if (changed === 'no-selector') throw new Error('Body format selector not found.');
+    // The old editor detaches and the new one attaches asynchronously, so wait
+    // for an instance that is not the one the switch replaced, rather than for
+    // whichever editable happens to exist right now. Waiting on a particular
+    // plugin would not do: a format under test may deliberately lack it.
+    if (changed === 'switched') {
+      await this.page.waitForFunction(() => {
+        const el = document.querySelector('.ck-editor__editable');
+        const ed = el && el.ckeditorInstance;
+        return ed && !ed.__anchorLinkOutgoing;
+      }, { timeout: 20000, polling: 100 });
+    }
     await waitForPageLoad(this.page, this.minWaitTime && this.minWaitTime.page);
   }, `Could not open a new article using the "${format}" text format`);
 });
