@@ -24,6 +24,16 @@ class CKEditorAnchorLinkMatcher extends MatcherBase {
 
     $string = ltrim((string) $string, '#');
 
+    // A search naming a scheme or a path is a link to somewhere else, and an
+    // id carries no whitespace, so none of those describe a fragment on this
+    // page and there is nothing to suggest.
+    if ($string === ''
+      || preg_match('#^[a-z][a-z0-9+.\-]*:#i', $string)
+      || str_contains($string, '/')
+      || preg_match('/\s/', $string)) {
+      return $suggestions;
+    }
+
     $suggestion = new DescriptionSuggestion();
     $suggestion->setLabel($this->t('#@anchor_link', ['@anchor_link' => $string]))
       ->setPath('#' . $string)
