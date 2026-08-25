@@ -22,7 +22,7 @@ class CKEditorAnchorLinkMatcher extends MatcherBase {
   public function execute($string) {
     $suggestions = new SuggestionCollection();
 
-    $string = ltrim($string, '#');
+    $string = ltrim((string) $string, '#');
 
     $suggestion = new DescriptionSuggestion();
     $suggestion->setLabel($this->t('#@anchor_link', ['@anchor_link' => $string]))
