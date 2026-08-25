@@ -20,6 +20,7 @@ Submit bug reports and feature suggestions, or track changes in the
 - Requirements
 - Installation
 - Configuration
+- Documentation
 - Maintainers
 
 
@@ -51,6 +52,21 @@ information, see
 
 An anchor is written as an `id` on the `<a>` element. The `name` attribute is
 also read, for content authored before the `id` attribute took over.
+
+
+## Documentation
+
+Full documentation lives in [docs/index.md](docs/index.md):
+
+- [For editors](docs/1-users/0-installation.md) - installing, inserting anchors,
+  linking to them and worked examples.
+- [For administrators](docs/2-admins/0-configuration.md) - text formats and
+  allowed HTML, Linkit integration and upgrading.
+- [For developers](docs/3-developers/0-architecture.md) - architecture, hooks
+  and plugins, and the Linkit matcher.
+- [Testing](docs/4-testing/0-overview.md) - the varbase-e2e browser suite,
+  PHPUnit and the GitLab CI pipeline.
+- [FAQ](docs/faq.md)
 
 
 ## Maintainers
