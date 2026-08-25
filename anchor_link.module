@@ -16,11 +16,3 @@ use Drupal\Core\Routing\RouteMatchInterface;
 function anchor_link_help($route_name, RouteMatchInterface $route_match) {
   return \Drupal::service(AnchorLinkHooks::class)->help($route_name, $route_match);
 }
-
-/**
- * Implements hook_ckeditor5_plugin_info_alter().
- */
-#[LegacyHook]
-function anchor_link_ckeditor5_plugin_info_alter(array &$plugin_definitions): void {
-  \Drupal::service(AnchorLinkHooks::class)->ckeditor5PluginInfoAlter($plugin_definitions);
-}
