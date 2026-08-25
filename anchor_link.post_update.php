@@ -27,6 +27,13 @@ function anchor_link_post_update_allow_anchor_name_attribute() {
  *   The string to append to `filter_html`'s `allowed_html` setting.
  */
 function _anchor_link_append_to_filter_html_settings(string $cke5_plugin_id, string $allowed_html_to_append) {
+  // A site updating from 8.x-2.x may run its updates before CKEditor 5 is
+  // installed. With no CKEditor 5 there is no editor using the plugin, so
+  // there is nothing to append and the update is a no-op.
+  if (!\Drupal::hasService('plugin.manager.ckeditor5.plugin') || !\Drupal::moduleHandler()->moduleExists('editor')) {
+    return;
+  }
+
   $cke5_plugin_manager = \Drupal::service('plugin.manager.ckeditor5.plugin');
   assert($cke5_plugin_manager instanceof CKEditor5PluginManagerInterface);
 
