@@ -40,8 +40,13 @@ Given(/^(?:I |we )?add( the)? testing users$/, async function (theCase) {
   await attempt(async () => {
     for (const [, info] of Object.entries(users)) {
       if (info.isAdmin) continue;
+      // Skip a username that already exists, so the step is idempotent.
+      await gotoUrl(this.page, `${this.parameters.launchUrl}/admin/people?user=${encodeURIComponent(info.username)}`);
+      const exists = await this.page.evaluate((name) =>
+        [...document.querySelectorAll('table td a, table td')].some(el => el.textContent.trim() === name), info.username);
+      if (exists) continue;
       await gotoUrl(this.page, `${this.parameters.launchUrl}/admin/people/create`);
-      await this.page.evaluate((info) => {
+      const missingRole = await this.page.evaluate((info) => {
         const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.value = val; };
         set('#edit-name', info.username);
         set('#edit-mail', info.email || `${info.username}@example.test`);
@@ -49,11 +54,24 @@ Given(/^(?:I |we )?add( the)? testing users$/, async function (theCase) {
         set('#edit-pass-pass2', info.password);
         for (const role of info.roles || []) {
           const cb = document.querySelector(`input[name="roles[${role}]"]`);
-          if (cb) cb.checked = true;
+          if (!cb) return role;
+          cb.checked = true;
         }
+        return null;
       }, info);
+      if (missingRole) {
+        throw new Error(`The "${missingRole}" role checkbox is not on the user form.`);
+      }
       await this.page.evaluate(() => document.querySelector('#edit-submit').click());
       await waitForPageLoad(this.page);
+      // The save must actually have produced the account.
+      const outcome = await this.page.evaluate(() => ({
+        ok: !!document.querySelector('[data-drupal-messages] .messages--status'),
+        error: (document.querySelector('[data-drupal-messages] .messages--error') || {}).textContent || '',
+      }));
+      if (!outcome.ok) {
+        throw new Error(`Creating "${info.username}" did not confirm: ${outcome.error.trim().slice(0, 200)}`);
+      }
     }
   }, 'Could not provision the testing users');
 });
@@ -78,7 +96,14 @@ When(/^(?:I |we )?open a new article using the "([^"]*)" text format$/, async fu
       return true;
     }, format);
     if (!changed) throw new Error('Body format selector not found.');
-    await waitForEditor(this.page);
+    // The old editor detaches and the new one attaches asynchronously, so wait
+    // for an instance that actually carries the Anchor plugin instead of
+    // whichever editable happens to exist right now.
+    await this.page.waitForFunction(() => {
+      const el = document.querySelector('.ck-editor__editable');
+      const ed = el && el.ckeditorInstance;
+      return ed && ed.plugins.has('Anchor');
+    }, { timeout: 20000, polling: 100 });
     await waitForPageLoad(this.page, this.minWaitTime && this.minWaitTime.page);
   }, `Could not open a new article using the "${format}" text format`);
 });
@@ -102,8 +127,8 @@ Then(/^the CKEditor toolbar should have the "([^"]*)" button$/, async function (
 /**
  * Insert an anchor around the given text via the Anchor balloon: set the editor
  * content, select it all, click the Anchor button, fill the "Anchor name" field
- * and submit. The Anchor plugin wraps the selection in
- * `<a class="ck-anchor" id="…">`.
+ * and submit. The Anchor plugin wraps the selection in `<a id="…">`; the
+ * ck-anchor class stays in the editing view and never reaches the data.
  *
  * Example: When I insert an anchor named "section-one" around the text "Jump here"
  */
@@ -227,10 +252,8 @@ When(/^(?:I |we )?view the article I created$/, async function () {
 Then(/^the page should contain an anchor with id "([^"]*)"$/, async function (id) {
   await attempt(async () => {
     await this.page.waitForFunction(
-      (id) => {
-        const a = document.querySelector(`a#${CSS.escape(id)}`);
-        return !!a;
-      },
+      (id) => [...document.querySelectorAll(`a#${CSS.escape(id)}`)]
+        .some(a => !a.closest('.ck-editor')),
       id,
       { timeout: 10000, polling: 100 },
     );
@@ -292,7 +315,8 @@ Then(/^the page should contain exactly (\d+) anchors? with id "([^"]*)"$/, async
   const target = Number(expected);
   await attempt(async () => {
     await this.page.waitForFunction(
-      ({ id, target }) => document.querySelectorAll(`a[id="${id}"]`).length === target,
+      ({ id, target }) => [...document.querySelectorAll(`a[id="${id}"]`)]
+        .filter(a => !a.closest('.ck-editor')).length === target,
       { id, target },
       { timeout: 10000, polling: 100 },
     );

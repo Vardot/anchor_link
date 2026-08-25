@@ -7,7 +7,7 @@ Feature: Content format administration is protected on Drupal CMS
   Scenario: An anonymous user cannot reach the content format configuration
     Given I am an anonymous user
     When I am on "/admin/config/content/formats/manage/content_format"
-    Then the "format edit form" element should be hidden
+    Then the "drupal access denied heading" element should be visible
 
   Scenario: The Webmaster can reach the content format configuration
     Given I am a logged in user with the "Webmaster" user

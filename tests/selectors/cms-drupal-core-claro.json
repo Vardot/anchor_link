@@ -37,7 +37,8 @@
     "dropbutton": ".dropbutton-wrapper",
     "status report": ".system-status-report",
     "user menu": ".toolbar-tab--toolbar-item-user",
-    "search input": "input[data-drupal-selector*='search'], input.form-search"
+    "search input": "input[data-drupal-selector*='search'], input.form-search",
+    "drupal access denied heading": "h1:has-text('Access denied')"
   },
   "xpath": {
     "page main heading": "//h1[contains(@class,'page-title')]",

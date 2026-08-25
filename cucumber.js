@@ -11,9 +11,8 @@
 //
 // The suite drives the site through the browser only - it opens the node form
 // with the recipe-provisioned "Anchor Test" CKEditor 5 format, inserts anchors
-// with the Anchor button and asserts the resulting `<a class="ck-anchor"
-// id="…">` survives filtering, renders, and pulls in the front-end stylesheet
-// only when an anchor is actually present.
+// with the Anchor button and asserts the resulting `<a id="…">` survives
+// filtering and renders, with the ck-anchor class kept out of the saved data.
 
 module.exports = {
   default: {
@@ -27,6 +26,7 @@ module.exports = {
     format: [
       '@cucumber/pretty-formatter',
       'json:tests/reports/cucumber_report.json',
+      'junit:tests/reports/junit.xml',
     ],
     worldParameters: {
       launchUrl: process.env.LAUNCH_URL || 'http://localhost',

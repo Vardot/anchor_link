@@ -18,6 +18,7 @@ module.exports = {
     format: [
       '@cucumber/pretty-formatter',
       'json:tests/reports/drupalcms/cucumber_report.json',
+      'junit:tests/reports/drupalcms/junit.xml',
     ],
     worldParameters: {
       launchUrl: process.env.LAUNCH_URL || 'http://localhost',
